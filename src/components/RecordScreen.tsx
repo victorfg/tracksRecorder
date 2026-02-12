@@ -36,7 +36,6 @@ export function RecordScreen() {
   const [duration, setDuration] = useState(0)
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null)
   const [holdProgress, setHoldProgress] = useState(0)
-  const holdTimerRef = useRef<number | null>(null)
   const holdIntervalRef = useRef<number | null>(null)
   const watchIdRef = useRef<number | null>(null)
   const startTimeRef = useRef<number>(0)
