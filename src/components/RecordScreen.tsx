@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline, Circle, CircleMarker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Track, TrackPoint } from '../types'
 import { useWakeLock } from '../hooks/useWakeLock'
@@ -135,7 +135,33 @@ export function RecordScreen() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapInit />
-          {currentPosition && <MapUpdater center={currentPosition} />}
+          {currentPosition && (
+            <>
+              <MapUpdater center={currentPosition} />
+              {accuracy !== null && accuracy < 100 && (
+                <Circle
+                  center={currentPosition}
+                  radius={accuracy}
+                  pathOptions={{
+                    color: '#2563eb',
+                    fillColor: '#2563eb',
+                    fillOpacity: 0.15,
+                    weight: 2,
+                  }}
+                />
+              )}
+              <CircleMarker
+                center={currentPosition}
+                radius={10}
+                pathOptions={{
+                  color: '#2563eb',
+                  fillColor: '#2563eb',
+                  fillOpacity: 1,
+                  weight: 3,
+                }}
+              />
+            </>
+          )}
           {latlngs.length > 1 && (
             <Polyline
               positions={latlngs}
