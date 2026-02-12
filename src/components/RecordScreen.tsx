@@ -122,8 +122,8 @@ function CenterOnMeButton({
       className={`center-on-me-btn ${loading ? 'loading' : ''}`}
       onClick={handleClick}
       disabled={loading}
-      title="La meva ubicació"
-      aria-label="Centrar en la meva posició"
+      title="La meva ubicació (només per mirar el mapa, no grava)"
+      aria-label="Veure la meva ubicació al mapa (no grava)"
     >
       {loading ? (
         <span className="center-on-me-btn-spinner">…</span>
@@ -160,6 +160,7 @@ export function RecordScreen() {
   const [duration, setDuration] = useState(0)
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null)
   const [userRequestedLocation, setUserRequestedLocation] = useState(false)
+  const [requestedPosition, setRequestedPosition] = useState<[number, number] | null>(null)
   const [holdProgress, setHoldProgress] = useState(0)
   const holdIntervalRef = useRef<number | null>(null)
   const watchIdRef = useRef<number | null>(null)
@@ -176,6 +177,7 @@ export function RecordScreen() {
     if (user) {
       setMapCenter(null)
       setUserRequestedLocation(false)
+      setRequestedPosition(null)
     }
   }, [user])
 
@@ -183,6 +185,7 @@ export function RecordScreen() {
     setError(null)
     setPoints([])
     setCurrentPosition(null)
+    setRequestedPosition(null)
     setAccuracy(null)
     startTimeRef.current = Date.now()
     setDuration(0)
@@ -272,7 +275,9 @@ export function RecordScreen() {
     center[0] === DEFAULT_CENTER[0] && center[1] === DEFAULT_CENTER[1]
   const zoom = isDefaultView ? 8 : RECORD_ZOOM
 
-  const displayPosition = user ? currentPosition : mapCenter
+  const displayPosition = user
+    ? (currentPosition ?? requestedPosition)
+    : mapCenter
   const showPositionMarker = displayPosition !== null
 
   // Direcció del moviment: mitjana dels últims segments per suavitzar (caminar)
@@ -325,14 +330,14 @@ export function RecordScreen() {
           )}
           <CenterOnMeButton
             position={displayPosition}
-            onLocationRequest={
-              !user
-                ? (pos) => {
-                    setMapCenter(pos)
-                    setUserRequestedLocation(true)
-                  }
-                : undefined
-            }
+            onLocationRequest={(pos) => {
+              if (!user) {
+                setMapCenter(pos)
+                setUserRequestedLocation(true)
+              } else {
+                setRequestedPosition(pos)
+              }
+            }}
           />
           {showPositionMarker && displayPosition ? (
             <>
