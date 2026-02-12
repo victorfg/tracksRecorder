@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useAuth } from '../contexts/AuthContext'
-import { getTrack } from '../services/tracksService'
+import { getTrack, deleteTrack } from '../services/tracksService'
 import type { Track } from '../types'
 import { calculateTrackDistance, formatDistance, formatDuration } from '../utils/geo'
 
@@ -21,9 +21,18 @@ function FitBounds({ positions }: { positions: [number, number][] }) {
 
 export function TrackDetail() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [track, setTrack] = useState<Track | null>(null)
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!id || !track || !window.confirm('¿Eliminar este track?')) return
+    setDeleting(true)
+    await deleteTrack(id, user?.uid)
+    navigate('/tracks')
+  }
 
   useEffect(() => {
     if (id) {
@@ -75,6 +84,14 @@ export function TrackDetail() {
           <span>{formatDuration(duration)}</span>
           <span>{track.points.length} puntos</span>
         </div>
+        <button
+          type="button"
+          className="btn-delete-track"
+          onClick={handleDelete}
+          disabled={deleting}
+        >
+          {deleting ? 'Eliminando...' : 'Eliminar'}
+        </button>
       </div>
       <div className="track-detail-map">
         <MapContainer

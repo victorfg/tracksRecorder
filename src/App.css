@@ -204,6 +204,26 @@
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
 }
 
+.btn-record.stop {
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.stop-btn-content {
+  position: relative;
+  z-index: 1;
+}
+
+.stop-btn-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.8);
+  transition: width 0.05s linear;
+}
+
 /* Tracks list */
 .tracks-list {
   flex: 1;
@@ -258,6 +278,56 @@
 .track-meta {
   font-size: 0.875rem;
   color: #94a3b8;
+}
+
+.track-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.track-item .track-link {
+  flex: 1;
+}
+
+.track-delete-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.track-delete-btn:hover {
+  background: #334155;
+  color: #f87171;
+}
+
+.btn-delete-track {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #475569;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-delete-track:hover:not(:disabled) {
+  border-color: #f87171;
+  color: #f87171;
+}
+
+.btn-delete-track:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Track detail */

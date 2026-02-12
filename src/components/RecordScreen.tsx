@@ -35,6 +35,9 @@ export function RecordScreen() {
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [duration, setDuration] = useState(0)
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null)
+  const [holdProgress, setHoldProgress] = useState(0)
+  const holdTimerRef = useRef<number | null>(null)
+  const holdIntervalRef = useRef<number | null>(null)
   const watchIdRef = useRef<number | null>(null)
   const startTimeRef = useRef<number>(0)
   const durationIntervalRef = useRef<number | null>(null)
@@ -126,7 +129,7 @@ export function RecordScreen() {
       }
       await saveTrack(track, user?.uid)
       setSaveSuccess(true)
-      setTimeout(() => setSaveSuccess(false), 4000)
+      setTimeout(() => setSaveSuccess(false), 5000)
     }
 
     setPoints([])
@@ -200,7 +203,7 @@ export function RecordScreen() {
       {user && (
       <div className="status-bar">
         {error && <div className="status-error">{error}</div>}
-        {saveSuccess && <div className="status-success">Track guardado correctamente</div>}
+        {saveSuccess && <div className="status-success">Track guardado y subido al servidor</div>}
         <div className="status-row">
             <span className={isRecording ? 'rec-dot' : ''}>
               {isRecording ? 'Grabando' : 'Pausado'}
@@ -225,11 +228,59 @@ export function RecordScreen() {
             Iniciar grabación
           </button>
         ) : (
-          <>
-            <button type="button" className="btn-record stop" onClick={stopRecording}>
-              Detener y guardar
-            </button>
-          </>
+          <button
+            type="button"
+            className="btn-record stop"
+            onPointerDown={() => {
+              setHoldProgress(0)
+              const start = Date.now()
+              holdIntervalRef.current = window.setInterval(() => {
+                const elapsed = (Date.now() - start) / 1000
+                setHoldProgress(Math.min(elapsed / 3, 1))
+                if (elapsed >= 3) {
+                  if (holdIntervalRef.current) clearInterval(holdIntervalRef.current)
+                  holdIntervalRef.current = null
+                  stopRecording()
+                  setHoldProgress(0)
+                }
+              }, 50)
+            }}
+            onPointerUp={() => {
+              if (holdIntervalRef.current) {
+                clearInterval(holdIntervalRef.current)
+                holdIntervalRef.current = null
+              }
+              setHoldProgress(0)
+            }}
+            onPointerLeave={() => {
+              if (holdIntervalRef.current) {
+                clearInterval(holdIntervalRef.current)
+                holdIntervalRef.current = null
+              }
+              setHoldProgress(0)
+            }}
+            onPointerCancel={() => {
+              if (holdIntervalRef.current) {
+                clearInterval(holdIntervalRef.current)
+                holdIntervalRef.current = null
+              }
+              setHoldProgress(0)
+            }}
+          >
+            <span className="stop-btn-content">
+              {holdProgress > 0 && holdProgress < 1 ? (
+                `Mantén ${Math.ceil(3 - holdProgress * 3)} s`
+              ) : (
+                'Mantén 3 s para detener'
+              )}
+            </span>
+            {holdProgress > 0 && (
+              <span
+                className="stop-btn-progress"
+                style={{ width: `${holdProgress * 100}%` }}
+              />
+            )}
+          </button>
         )}
       </div>
     </div>

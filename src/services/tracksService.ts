@@ -6,6 +6,7 @@ import {
   getDocs,
   query,
   orderBy,
+  deleteDoc,
 } from 'firebase/firestore'
 import { db, isFirebaseConfigured } from '../lib/firebase'
 import type { Track, TrackPoint } from '../types'
@@ -83,4 +84,16 @@ export async function getTrack(
 
   const { getTrack: getLocal } = await import('../storage')
   return getLocal(id)
+}
+
+export async function deleteTrack(
+  id: string,
+  userId?: string | null
+): Promise<void> {
+  const { deleteTrack: deleteLocal } = await import('../storage')
+  await deleteLocal(id)
+
+  if (isFirebaseConfigured() && userId) {
+    await deleteDoc(trackDoc(userId, id))
+  }
 }

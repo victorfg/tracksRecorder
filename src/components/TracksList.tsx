@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { getTracks } from '../services/tracksService'
+import { getTracks, deleteTrack } from '../services/tracksService'
 import type { Track } from '../types'
 import { calculateTrackDistance, formatDistance, formatDuration } from '../utils/geo'
 
@@ -61,6 +61,21 @@ export function TracksList() {
                   {track.points.length} puntos
                 </span>
               </Link>
+              <button
+                type="button"
+                className="track-delete-btn"
+                onClick={async (e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (window.confirm('¿Eliminar este track?')) {
+                    await deleteTrack(track.id, user?.uid)
+                    setTracks((prev) => prev.filter((t) => t.id !== track.id))
+                  }
+                }}
+                title="Eliminar"
+              >
+                ×
+              </button>
             </li>
           )
         })}
