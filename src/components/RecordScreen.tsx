@@ -161,10 +161,10 @@ export function RecordScreen() {
           />
           <MapInit />
           {!user && mapCenter && <MapUpdater center={mapCenter} />}
-          {showPositionMarker && displayPosition && (
+          {showPositionMarker && displayPosition ? (
             <>
-              {user && <MapUpdater center={currentPosition!} />}
-              {user && accuracy !== null && accuracy < 100 && (
+              {user && currentPosition && <MapUpdater center={currentPosition} />}
+              {user && accuracy !== null && accuracy < 100 && currentPosition && (
                 <Circle
                   center={currentPosition}
                   radius={accuracy}
@@ -177,7 +177,7 @@ export function RecordScreen() {
                 />
               )}
               <CircleMarker
-                center={displayPosition as [number, number]}
+                center={displayPosition}
                 radius={10}
                 pathOptions={{
                   color: '#2563eb',
