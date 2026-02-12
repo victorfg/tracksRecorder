@@ -187,7 +187,7 @@ export function RecordScreen() {
                 }}
               />
             </>
-          )}
+          ) : null}
           {latlngs.length > 1 && (
             <Polyline
               positions={latlngs}
