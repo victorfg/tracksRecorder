@@ -402,6 +402,10 @@ export function MapView() {
           zoom={8}
           className="map"
           style={{ height: '100%', width: '100%' }}
+          rotate={true}
+          bearing={0}
+          touchRotate={true}
+          rotateControl={false}
         >
           <TileLayer
             key={basemap.id}
