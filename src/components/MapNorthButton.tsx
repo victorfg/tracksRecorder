@@ -18,7 +18,9 @@ export function MapNorthButton({ visible = true }: Props) {
     }
     updateBearing()
     map.on('rotate', updateBearing)
-    return () => map.off('rotate', updateBearing)
+    return () => {
+      map.off('rotate', updateBearing)
+    }
   }, [map])
 
   if (!visible) return null
