@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { MapContainer, TileLayer, Polyline, Circle, CircleMarker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Track, TrackPoint } from '../types'
@@ -23,6 +24,8 @@ function MapInit() {
   return null
 }
 
+const DEFAULT_CENTER: [number, number] = [40.4168, -3.7038]
+
 export function RecordScreen() {
   const [isRecording, setIsRecording] = useState(false)
   const [points, setPoints] = useState<TrackPoint[]>([])
@@ -31,6 +34,7 @@ export function RecordScreen() {
   const [error, setError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [duration, setDuration] = useState(0)
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null)
   const watchIdRef = useRef<number | null>(null)
   const startTimeRef = useRef<number>(0)
   const durationIntervalRef = useRef<number | null>(null)
@@ -39,6 +43,19 @@ export function RecordScreen() {
 
   const { isSupported: wakeLockSupported, request: requestWakeLock, release: releaseWakeLock } = useWakeLock()
   const { user } = useAuth()
+
+  // Obtener ubicación para centrar el mapa cuando no está logueado
+  useEffect(() => {
+    if (!user) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setMapCenter([pos.coords.latitude, pos.coords.longitude]),
+        () => setMapCenter(DEFAULT_CENTER),
+        { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
+      )
+    } else {
+      setMapCenter(null)
+    }
+  }, [user])
 
   const startRecording = useCallback(async () => {
     setError(null)
@@ -123,7 +140,10 @@ export function RecordScreen() {
   }
 
   const latlngs: [number, number][] = points.map((p) => [p.lat, p.lng])
-  const center: [number, number] = currentPosition ?? (points[0] ? [points[0].lat, points[0].lng] : [40.4168, -3.7038])
+  const center: [number, number] = currentPosition ?? (points[0] ? [points[0].lat, points[0].lng] : mapCenter ?? DEFAULT_CENTER)
+
+  const displayPosition = user ? currentPosition : mapCenter
+  const showPositionMarker = displayPosition !== null
 
   return (
     <div className="record-screen">
@@ -140,10 +160,11 @@ export function RecordScreen() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapInit />
-          {currentPosition && (
+          {!user && mapCenter && <MapUpdater center={mapCenter} />}
+          {showPositionMarker && displayPosition && (
             <>
-              <MapUpdater center={currentPosition} />
-              {accuracy !== null && accuracy < 100 && (
+              {user && <MapUpdater center={currentPosition!} />}
+              {user && accuracy !== null && accuracy < 100 && (
                 <Circle
                   center={currentPosition}
                   radius={accuracy}
@@ -156,7 +177,7 @@ export function RecordScreen() {
                 />
               )}
               <CircleMarker
-                center={currentPosition}
+                center={displayPosition}
                 radius={10}
                 pathOptions={{
                   color: '#2563eb',
@@ -176,28 +197,39 @@ export function RecordScreen() {
         </MapContainer>
       </div>
 
+      {user && (
       <div className="status-bar">
         {error && <div className="status-error">{error}</div>}
         {saveSuccess && <div className="status-success">Track guardado correctamente</div>}
         <div className="status-row">
-          <span className={isRecording ? 'rec-dot' : ''}>
-            {isRecording ? 'Grabando' : 'Pausado'}
-          </span>
-          <span>{points.length} puntos</span>
-          {isRecording && <span>{formatDuration(duration)}</span>}
-          {accuracy !== null && <span>±{Math.round(accuracy)}m</span>}
+            <span className={isRecording ? 'rec-dot' : ''}>
+              {isRecording ? 'Grabando' : 'Pausado'}
+            </span>
+            <span>{points.length} puntos</span>
+            {isRecording && <span>{formatDuration(duration)}</span>}
+            {accuracy !== null && <span>±{Math.round(accuracy)}m</span>}
         </div>
       </div>
+      )}
 
       <div className="record-actions">
-        {!isRecording ? (
+        {!user ? (
+          <div className="login-required-overlay">
+            <p>Inicia sesión para grabar</p>
+            <Link to="/login" className="btn-record start">
+              Entrar o crear cuenta
+            </Link>
+          </div>
+        ) : !isRecording ? (
           <button type="button" className="btn-record start" onClick={startRecording}>
             Iniciar grabación
           </button>
         ) : (
-          <button type="button" className="btn-record stop" onClick={stopRecording}>
-            Detener y guardar
-          </button>
+          <>
+            <button type="button" className="btn-record stop" onClick={stopRecording}>
+              Detener y guardar
+            </button>
+          </>
         )}
       </div>
     </div>

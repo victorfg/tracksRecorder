@@ -14,13 +14,12 @@ function AppHeader() {
       <Link to="/" className="app-logo">
         <h1>Tracks Recorder</h1>
       </Link>
-      <nav className="app-nav">
-        <NavLink to="/" className="nav-link" end>
-          Grabar
-        </NavLink>
-        <NavLink to="/tracks" className="nav-link">
-          Mis tracks
-        </NavLink>
+        <nav className="app-nav">
+          {user && (
+            <NavLink to="/tracks" className="nav-link">
+              Mis tracks
+            </NavLink>
+          )}
         {user ? (
           <div className="nav-user">
             <span className="nav-email">{user.email}</span>
