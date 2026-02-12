@@ -1,0 +1,132 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #0f172a;
+}
+
+.app-header {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  background: #1e293b;
+  color: #f8fafc;
+  text-align: center;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Record Screen - Mobile first */
+.record-screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.map-container {
+  flex: 1;
+  position: relative;
+  min-height: 200px;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+.leaflet-container {
+  font-family: inherit;
+}
+
+.status-bar {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  background: #1e293b;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+.status-error {
+  color: #f87171;
+  margin-bottom: 0.25rem;
+}
+
+.status-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.rec-dot {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.rec-dot::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.record-actions {
+  flex-shrink: 0;
+  padding: 1rem;
+  background: #0f172a;
+}
+
+.btn-record {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-record:active {
+  transform: scale(0.98);
+}
+
+.btn-record.start {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-record.start:hover {
+  background: #16a34a;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+}
+
+.btn-record.stop {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-record.stop:hover {
+  background: #dc2626;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
