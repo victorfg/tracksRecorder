@@ -95,8 +95,8 @@ function App() {
   useEffect(() => {
     if (!user?.uid) return
     const sync = async () => {
-      const { synced } = await syncLocalTracksToCloud(user.uid)
-      if (synced > 0) {
+      const { synced, removed } = await syncLocalTracksToCloud(user.uid)
+      if (synced > 0 || removed > 0) {
         window.dispatchEvent(new CustomEvent('tracks-synced'))
       }
     }

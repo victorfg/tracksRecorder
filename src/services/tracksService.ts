@@ -8,6 +8,7 @@ import {
   orderBy,
   deleteDoc,
 } from 'firebase/firestore'
+import { deleteTrack as deleteTrackLocal } from '../storage'
 import { db, isFirebaseConfigured } from '../lib/firebase'
 import type { Track, TrackPoint } from '../types'
 import { saveTrack as saveTrackLocal, getTracks as getTracksLocal } from '../storage'
@@ -18,6 +19,38 @@ function tracksCollection(userId: string) {
 
 function trackDoc(userId: string, trackId: string) {
   return doc(db, 'users', userId, 'tracks', trackId)
+}
+
+function deletedCollection(userId: string) {
+  return collection(db, 'users', userId, 'deleted')
+}
+
+function deletedDoc(userId: string, trackId: string) {
+  return doc(db, 'users', userId, 'deleted', trackId)
+}
+
+/** Aplica les eliminacions fetes en altres dispositius: llegeix la llista i esborra de local.
+ *  Retorna el nombre de tracks eliminats localment. */
+async function applyDeletedFromCloud(
+  userId: string
+): Promise<number> {
+  if (!isFirebaseConfigured()) return 0
+  try {
+    const snapshot = await getDocs(deletedCollection(userId))
+    let removed = 0
+    for (const d of snapshot.docs) {
+      try {
+        await deleteTrackLocal(d.id)
+        await deleteDoc(deletedDoc(userId, d.id))
+        removed++
+      } catch {
+        // Continua amb els altres encara que falli un
+      }
+    }
+    return removed
+  } catch {
+    return 0
+  }
 }
 
 function firestoreToTrack(id: string, data: Record<string, unknown>): Track {
@@ -63,6 +96,7 @@ export async function saveTrack(
 export async function getTracks(userId?: string | null): Promise<Track[]> {
   if (isFirebaseConfigured() && userId) {
     try {
+      await applyDeletedFromCloud(userId)
       const q = query(
         tracksCollection(userId),
         orderBy('createdAt', 'desc')
@@ -101,12 +135,15 @@ export async function getTrack(
   return getLocal(id)
 }
 
-/** Puja a Firebase els tracks que només estan en local. Retorna quants s'han pujat. */
+/** Puja a Firebase els tracks que només estan en local.
+ *  Abans aplica les eliminacions fetes en altres dispositius.
+ *  Retorna { synced, failed, removed }. */
 export async function syncLocalTracksToCloud(
   userId: string
-): Promise<{ synced: number; failed: number }> {
-  if (!isFirebaseConfigured()) return { synced: 0, failed: 0 }
+): Promise<{ synced: number; failed: number; removed: number }> {
+  if (!isFirebaseConfigured()) return { synced: 0, failed: 0, removed: 0 }
   try {
+    const removed = await applyDeletedFromCloud(userId)
     const cloudSnapshot = await getDocs(tracksCollection(userId))
     const cloudIds = new Set(cloudSnapshot.docs.map((d) => d.id))
     const localTracks = await getTracksLocal()
@@ -127,9 +164,9 @@ export async function syncLocalTracksToCloud(
         failed++
       }
     }
-    return { synced, failed }
+    return { synced, failed, removed }
   } catch {
-    return { synced: 0, failed: 0 }
+    return { synced: 0, failed: 0, removed: 0 }
   }
 }
 
@@ -137,10 +174,10 @@ export async function deleteTrack(
   id: string,
   userId?: string | null
 ): Promise<void> {
-  const { deleteTrack: deleteLocal } = await import('../storage')
-  await deleteLocal(id)
+  await deleteTrackLocal(id)
 
   if (isFirebaseConfigured() && userId) {
     await deleteDoc(trackDoc(userId, id))
+    await setDoc(deletedDoc(userId, id), { at: Date.now() })
   }
 }

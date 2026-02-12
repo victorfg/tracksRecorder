@@ -40,11 +40,13 @@ function MapFollowUpdater({
   const lastRef = useRef<[number, number] | null>(null)
   useEffect(() => {
     const prev = lastRef.current
-    const shouldUpdate =
-      !prev || haversineM(prev, position) >= minMoveM
+    const isFirst = !prev
+    const shouldUpdate = isFirst || haversineM(prev, position) >= minMoveM
     if (shouldUpdate) {
       lastRef.current = position
-      if (smooth) {
+      if (isFirst) {
+        map.setView(position, zoom, { animate: true, duration: 0.5 })
+      } else if (smooth) {
         map.panTo(position, { animate: true, duration: 0.4 })
       } else {
         map.setView(position, zoom)
