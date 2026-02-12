@@ -86,20 +86,53 @@ function MapInit() {
   return null
 }
 
-function CenterOnMeButton({ position }: { position: [number, number] }) {
+function CenterOnMeButton({
+  position,
+  onLocationRequest,
+}: {
+  position: [number, number] | null
+  onLocationRequest?: (pos: [number, number]) => void
+}) {
   const map = useMap()
+  const [loading, setLoading] = useState(false)
+
   const handleClick = () => {
-    map.setView(position, RECORD_ZOOM, { animate: true, duration: 0.5 })
+    if (position) {
+      map.setView(position, RECORD_ZOOM, { animate: true, duration: 0.5 })
+      return
+    }
+    setLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude]
+        onLocationRequest?.(coords)
+        map.setView(coords, RECORD_ZOOM, { animate: true, duration: 0.5 })
+        setLoading(false)
+      },
+      () => {
+        setLoading(false)
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    )
   }
+
   return (
     <button
       type="button"
-      className="center-on-me-btn"
+      className={`center-on-me-btn ${loading ? 'loading' : ''}`}
       onClick={handleClick}
-      title="Centrar en la meva posició"
+      disabled={loading}
+      title="La meva ubicació"
       aria-label="Centrar en la meva posició"
     >
-      ⌖
+      {loading ? (
+        <span className="center-on-me-btn-spinner">…</span>
+      ) : (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />
+        </svg>
+      )}
     </button>
   )
 }
@@ -126,6 +159,7 @@ export function RecordScreen() {
   const [saveCloudFailed, setSaveCloudFailed] = useState(false)
   const [duration, setDuration] = useState(0)
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null)
+  const [userRequestedLocation, setUserRequestedLocation] = useState(false)
   const [holdProgress, setHoldProgress] = useState(0)
   const holdIntervalRef = useRef<number | null>(null)
   const watchIdRef = useRef<number | null>(null)
@@ -138,16 +172,10 @@ export function RecordScreen() {
   const { user } = useAuth()
   const { basemap } = useMapLayer()
 
-  // Obtener ubicación para centrar el mapa cuando no está logueado
   useEffect(() => {
-    if (!user) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setMapCenter([pos.coords.latitude, pos.coords.longitude]),
-        () => setMapCenter(DEFAULT_CENTER),
-        { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
-      )
-    } else {
+    if (user) {
       setMapCenter(null)
+      setUserRequestedLocation(false)
     }
   }, [user])
 
@@ -289,11 +317,25 @@ export function RecordScreen() {
           <MapInit />
           <BasemapChangeHandler basemapId={basemap.id} />
           {!user && mapCenter && (
-            <MapUpdater center={mapCenter} zoom={8} smooth={false} />
+            <MapUpdater
+              center={mapCenter}
+              zoom={userRequestedLocation ? RECORD_ZOOM : 8}
+              smooth={false}
+            />
           )}
+          <CenterOnMeButton
+            position={displayPosition}
+            onLocationRequest={
+              !user
+                ? (pos) => {
+                    setMapCenter(pos)
+                    setUserRequestedLocation(true)
+                  }
+                : undefined
+            }
+          />
           {showPositionMarker && displayPosition ? (
             <>
-              <CenterOnMeButton position={displayPosition} />
               {user && currentPosition && (
                 <MapFollowUpdater
                   position={currentPosition}

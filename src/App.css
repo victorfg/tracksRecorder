@@ -284,16 +284,30 @@
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  color: var(--accent);
-  font-size: 1.25rem;
+  color: var(--text-primary);
   cursor: pointer;
   box-shadow: var(--shadow-md);
   transition: background var(--transition), border-color var(--transition);
 }
 
-.center-on-me-btn:hover {
+.center-on-me-btn svg {
+  flex-shrink: 0;
+}
+
+.center-on-me-btn-spinner {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+}
+
+.center-on-me-btn:hover:not(:disabled) {
   background: var(--bg-hover);
   border-color: rgba(148, 163, 184, 0.2);
+}
+
+.center-on-me-btn:disabled,
+.center-on-me-btn.loading {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 @media (min-width: 768px) {
