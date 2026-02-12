@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet
 import 'leaflet/dist/leaflet.css'
 import { useAuth } from '../contexts/AuthContext'
 import { useMapLayer } from '../contexts/MapLayerContext'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { getTrack, saveTrack } from '../services/tracksService'
 import type { Track } from '../types'
 import {
@@ -14,6 +15,7 @@ import {
 } from '../utils/geo'
 import { addPointOnLineAt } from '../utils/turfUtils'
 import { MapLayerControl } from './MapLayerControl'
+import { MapNorthButton } from './MapNorthButton'
 import { TrackEditControl } from './TrackEditControl'
 
 function BasemapChangeHandler({ basemapId }: { basemapId: string }) {
@@ -147,6 +149,7 @@ export function TrackDetail() {
   const [editMode, setEditMode] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [isDesktop, setIsDesktop] = useState(false)
+  const isMobile = useIsMobile()
   const trackDetailRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -309,9 +312,9 @@ export function TrackDetail() {
           zoom={15}
           className="map"
           style={{ height: '100%', width: '100%' }}
-          rotate={true}
+          rotate={isMobile}
           bearing={0}
-          touchRotate={true}
+          touchRotate={isMobile}
           rotateControl={false}
         >
           <TileLayer
@@ -321,6 +324,7 @@ export function TrackDetail() {
             tms={basemap.tms}
           />
           <BasemapChangeHandler basemapId={basemap.id} />
+          <MapNorthButton visible={isMobile} />
           <MapResizeHandler infoHeight={48} />
           <EditableMapContent
             track={track}

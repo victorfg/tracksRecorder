@@ -10,6 +10,7 @@ import {
 import 'leaflet/dist/leaflet.css'
 import { useAuth } from '../contexts/AuthContext'
 import { useMapLayer } from '../contexts/MapLayerContext'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { getTracks, saveTrack } from '../services/tracksService'
 import {
   calculateTrackDistance,
@@ -20,6 +21,7 @@ import {
 import { parseGpxOrTcx } from '../utils/gpxTcxParser'
 import { ElevationProfile } from './ElevationProfile'
 import { MapLayerControl } from './MapLayerControl'
+import { MapNorthButton } from './MapNorthButton'
 import type { Track } from '../types'
 import './MapView.css'
 
@@ -78,6 +80,7 @@ function FitAllLayers({ layers }: { layers: MapLayer[] }) {
 export function MapView() {
   const { user } = useAuth()
   const { basemap } = useMapLayer()
+  const isMobile = useIsMobile()
   const [tracks, setTracks] = useState<Track[]>([])
   const [layers, setLayers] = useState<MapLayer[]>([])
   const [loading, setLoading] = useState(true)
@@ -402,9 +405,9 @@ export function MapView() {
           zoom={8}
           className="map"
           style={{ height: '100%', width: '100%' }}
-          rotate={true}
+          rotate={isMobile}
           bearing={0}
-          touchRotate={true}
+          touchRotate={isMobile}
           rotateControl={false}
         >
           <TileLayer
@@ -415,6 +418,7 @@ export function MapView() {
           />
           <MapResizeHandler sidebarOpen={sidebarOpen} />
           <BasemapChangeHandler basemapId={basemap.id} />
+          <MapNorthButton visible={isMobile} />
           {layers.length > 0 && <FitAllLayers layers={layers} />}
           {layers
             .filter((l) => l.visible)

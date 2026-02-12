@@ -4,12 +4,14 @@ import { MapContainer, TileLayer, Polyline, Circle, useMap } from 'react-leaflet
 import 'leaflet/dist/leaflet.css'
 import type { Track, TrackPoint } from '../types'
 import { useWakeLock } from '../hooks/useWakeLock'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuth } from '../contexts/AuthContext'
 import { saveTrack } from '../services/tracksService'
 import { bearing } from '../utils/geo'
 import { useMapLayer } from '../contexts/MapLayerContext'
 import { LocationMarker } from './LocationMarker'
 import { MapLayerControl } from './MapLayerControl'
+import { MapNorthButton } from './MapNorthButton'
 
 const RECORD_ZOOM = 18
 
@@ -171,6 +173,7 @@ export function RecordScreen() {
 
   const { isSupported: wakeLockSupported, request: requestWakeLock, release: releaseWakeLock } = useWakeLock()
   const { user } = useAuth()
+  const isMobile = useIsMobile()
   const { basemap } = useMapLayer()
 
   useEffect(() => {
@@ -312,9 +315,9 @@ export function RecordScreen() {
           className="map"
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
-          rotate={true}
+          rotate={isMobile}
           bearing={0}
-          touchRotate={true}
+          touchRotate={isMobile}
           rotateControl={false}
         >
           <TileLayer
@@ -325,6 +328,7 @@ export function RecordScreen() {
           />
           <MapInit />
           <BasemapChangeHandler basemapId={basemap.id} />
+          <MapNorthButton visible={isMobile} />
           {!user && mapCenter && (
             <MapUpdater
               center={mapCenter}

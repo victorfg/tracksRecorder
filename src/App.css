@@ -316,6 +316,38 @@
   }
 }
 
+/* Botó "nord amunt" - solo mobile, quan hi ha rotació */
+.map-north-btn {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.map-north-btn:hover {
+  background: var(--bg-hover);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+@media (min-width: 768px) {
+  .map-north-btn {
+    display: none;
+  }
+}
+
 .status-bar {
   flex-shrink: 0;
   padding: 0.75rem 1.25rem;
