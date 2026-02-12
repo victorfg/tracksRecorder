@@ -11,12 +11,68 @@ import { useMapLayer } from '../contexts/MapLayerContext'
 import { LocationMarker } from './LocationMarker'
 import { MapLayerControl } from './MapLayerControl'
 
-function MapUpdater({ center }: { center: [number, number] }) {
+const RECORD_ZOOM = 18
+
+function haversineM(a: [number, number], b: [number, number]): number {
+  const R = 6371000
+  const dLat = ((b[0] - a[0]) * Math.PI) / 180
+  const dLon = ((b[1] - a[1]) * Math.PI) / 180
+  const x =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a[0] * Math.PI) / 180) *
+      Math.cos((b[0] * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
+}
+
+function MapFollowUpdater({
+  position,
+  zoom,
+  smooth,
+  minMoveM = 2,
+}: {
+  position: [number, number]
+  zoom: number
+  smooth: boolean
+  minMoveM?: number
+}) {
+  const map = useMap()
+  const lastRef = useRef<[number, number] | null>(null)
+  useEffect(() => {
+    const prev = lastRef.current
+    const shouldUpdate =
+      !prev || haversineM(prev, position) >= minMoveM
+    if (shouldUpdate) {
+      lastRef.current = position
+      if (smooth) {
+        map.panTo(position, { animate: true, duration: 0.4 })
+      } else {
+        map.setView(position, zoom)
+      }
+    }
+    map.invalidateSize()
+  }, [map, position, zoom, smooth, minMoveM])
+  return null
+}
+
+function MapUpdater({
+  center,
+  zoom,
+  smooth,
+}: {
+  center: [number, number]
+  zoom: number
+  smooth?: boolean
+}) {
   const map = useMap()
   useEffect(() => {
-    map.setView(center, map.getZoom())
+    if (smooth) {
+      map.panTo(center, { animate: true, duration: 0.5 })
+    } else {
+      map.setView(center, zoom)
+    }
     map.invalidateSize()
-  }, [map, center])
+  }, [map, center, zoom, smooth])
   return null
 }
 
@@ -166,22 +222,31 @@ export function RecordScreen() {
 
   const isDefaultView =
     center[0] === DEFAULT_CENTER[0] && center[1] === DEFAULT_CENTER[1]
-  const zoom = isDefaultView ? 8 : 17
+  const zoom = isDefaultView ? 8 : RECORD_ZOOM
 
   const displayPosition = user ? currentPosition : mapCenter
   const showPositionMarker = displayPosition !== null
 
-  // Direcció del moviment per la icona (calen 2+ punts i haver-se mogut >2m)
+  // Direcció del moviment: mitjana dels últims segments per suavitzar (caminar)
   let directionBearing: number | null = null
   if (user && currentPosition && points.length >= 2) {
-    const a = points[points.length - 2]
-    const b = points[points.length - 1]
-    const distM = Math.hypot(
-      (b.lng - a.lng) * 111320 * Math.cos((a.lat * Math.PI) / 180),
-      (b.lat - a.lat) * 110540
-    )
-    if (distM >= 2) {
-      directionBearing = bearing(a.lat, a.lng, b.lat, b.lng)
+    const bearings: number[] = []
+    const maxSegments = 5
+    for (let i = points.length - 1; i > 0 && bearings.length < maxSegments; i--) {
+      const a = points[i - 1]
+      const b = points[i]
+      const distM = Math.hypot(
+        (b.lng - a.lng) * 111320 * Math.cos((a.lat * Math.PI) / 180),
+        (b.lat - a.lat) * 110540
+      )
+      if (distM >= 0.3) {
+        bearings.push(bearing(a.lat, a.lng, b.lat, b.lng))
+      }
+    }
+    if (bearings.length > 0) {
+      const sumSin = bearings.reduce((s, b) => s + Math.sin((b * Math.PI) / 180), 0)
+      const sumCos = bearings.reduce((s, b) => s + Math.cos((b * Math.PI) / 180), 0)
+      directionBearing = ((Math.atan2(sumSin, sumCos) * 180) / Math.PI + 360) % 360
     }
   }
 
@@ -203,10 +268,19 @@ export function RecordScreen() {
           />
           <MapInit />
           <BasemapChangeHandler basemapId={basemap.id} />
-          {!user && mapCenter && <MapUpdater center={mapCenter} />}
+          {!user && mapCenter && (
+            <MapUpdater center={mapCenter} zoom={8} smooth={false} />
+          )}
           {showPositionMarker && displayPosition ? (
             <>
-              {user && currentPosition && <MapUpdater center={currentPosition} />}
+              {user && currentPosition && (
+                <MapFollowUpdater
+                  position={currentPosition}
+                  zoom={RECORD_ZOOM}
+                  smooth={isRecording}
+                  minMoveM={2}
+                />
+              )}
               {user && accuracy !== null && accuracy < 100 && currentPosition && (
                 <Circle
                   center={currentPosition}
@@ -276,7 +350,10 @@ export function RecordScreen() {
           <button
             type="button"
             className="btn-record stop"
-            onPointerDown={() => {
+            onTouchStart={(e) => e.preventDefault()}
+            onContextMenu={(e) => e.preventDefault()}
+            onPointerDown={(e) => {
+              e.preventDefault()
               setHoldProgress(0)
               const start = Date.now()
               holdIntervalRef.current = window.setInterval(() => {

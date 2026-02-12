@@ -381,6 +381,10 @@
   position: relative;
   overflow: hidden;
   touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .stop-btn-content {
