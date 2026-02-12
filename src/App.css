@@ -12,13 +12,78 @@
   padding: 0.75rem 1rem;
   background: #1e293b;
   color: #f8fafc;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.app-logo {
+  color: inherit;
+  text-decoration: none;
 }
 
 .app-header h1 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
+}
+
+.app-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-link {
+  padding: 0.4rem 0.75rem;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-radius: 6px;
+}
+
+.nav-link:hover {
+  color: #f8fafc;
+  background: #334155;
+}
+
+.nav-link.active {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.nav-link-emphasis {
+  color: #22c55e !important;
+  font-weight: 600;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-email {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-logout {
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: 1px solid #475569;
+  color: #94a3b8;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.nav-logout:hover {
+  border-color: #f87171;
+  color: #f87171;
 }
 
 .app-main {
@@ -63,6 +128,12 @@
 .status-error {
   color: #f87171;
   margin-bottom: 0.25rem;
+}
+
+.status-success {
+  color: #22c55e;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
 }
 
 .status-row {
@@ -131,4 +202,104 @@
 .btn-record.stop:hover {
   background: #dc2626;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
+
+/* Tracks list */
+.tracks-list {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.tracks-loading,
+.tracks-empty {
+  color: #94a3b8;
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.tracks-hint {
+  color: #64748b;
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.tracks-ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.track-item {
+  margin-bottom: 0.5rem;
+}
+
+.track-link {
+  display: block;
+  padding: 1rem;
+  background: #1e293b;
+  border-radius: 8px;
+  color: #f8fafc;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.track-link:hover {
+  background: #334155;
+}
+
+.track-name {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.track-meta {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+/* Track detail */
+.track-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.track-detail-header {
+  flex-shrink: 0;
+  padding: 1rem;
+  background: #1e293b;
+}
+
+.track-back {
+  display: inline-block;
+  color: #22c55e;
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.track-back:hover {
+  text-decoration: underline;
+}
+
+.track-detail-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.track-stats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.track-detail-map {
+  flex: 1;
+  min-height: 0;
 }

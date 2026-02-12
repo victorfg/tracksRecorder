@@ -3,7 +3,8 @@ import { MapContainer, TileLayer, Polyline, Circle, CircleMarker, useMap } from 
 import 'leaflet/dist/leaflet.css'
 import type { Track, TrackPoint } from '../types'
 import { useWakeLock } from '../hooks/useWakeLock'
-import { saveTrack } from '../storage'
+import { useAuth } from '../contexts/AuthContext'
+import { saveTrack } from '../services/tracksService'
 
 function MapUpdater({ center }: { center: [number, number] }) {
   const map = useMap()
@@ -28,6 +29,7 @@ export function RecordScreen() {
   const [currentPosition, setCurrentPosition] = useState<[number, number] | null>(null)
   const [accuracy, setAccuracy] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [duration, setDuration] = useState(0)
   const watchIdRef = useRef<number | null>(null)
   const startTimeRef = useRef<number>(0)
@@ -36,6 +38,7 @@ export function RecordScreen() {
   pointsRef.current = points
 
   const { isSupported: wakeLockSupported, request: requestWakeLock, release: releaseWakeLock } = useWakeLock()
+  const { user } = useAuth()
 
   const startRecording = useCallback(async () => {
     setError(null)
@@ -104,7 +107,9 @@ export function RecordScreen() {
         endTime: pointsToSave[pointsToSave.length - 1].timestamp,
         createdAt: Date.now(),
       }
-      await saveTrack(track)
+      await saveTrack(track, user?.id)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 4000)
     }
 
     setPoints([])
@@ -173,6 +178,7 @@ export function RecordScreen() {
 
       <div className="status-bar">
         {error && <div className="status-error">{error}</div>}
+        {saveSuccess && <div className="status-success">Track guardado correctamente</div>}
         <div className="status-row">
           <span className={isRecording ? 'rec-dot' : ''}>
             {isRecording ? 'Grabando' : 'Pausado'}
