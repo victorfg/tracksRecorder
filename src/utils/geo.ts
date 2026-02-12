@@ -44,3 +44,43 @@ export function formatDuration(seconds: number): string {
   if (m > 0) return `${m} min ${s} s`
   return `${s} s`
 }
+
+/** Bearing in degrees (0 = North, 90 = East) from point A to B */
+export function bearing(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = Math.PI / 180
+  const dLon = (lon2 - lon1) * R
+  const y = Math.sin(dLon) * Math.cos(lat2 * R)
+  const x =
+    Math.cos(lat1 * R) * Math.sin(lat2 * R) -
+    Math.sin(lat1 * R) * Math.cos(lat2 * R) * Math.cos(dLon)
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360
+}
+
+/** Point at given bearing and distance (meters) from start */
+export function destination(
+  lat: number,
+  lon: number,
+  bearingDeg: number,
+  distanceM: number
+): [number, number] {
+  const R = 6371000
+  const br = (bearingDeg * Math.PI) / 180
+  const lat1 = (lat * Math.PI) / 180
+  const lon1 = (lon * Math.PI) / 180
+  const lat2 = Math.asin(
+    Math.sin(lat1) * Math.cos(distanceM / R) +
+      Math.cos(lat1) * Math.sin(distanceM / R) * Math.cos(br)
+  )
+  const lon2 =
+    lon1 +
+    Math.atan2(
+      Math.sin(br) * Math.sin(distanceM / R) * Math.cos(lat1),
+      Math.cos(distanceM / R) - Math.sin(lat1) * Math.sin(lat2)
+    )
+  return [(lat2 * 180) / Math.PI, (lon2 * 180) / Math.PI]
+}

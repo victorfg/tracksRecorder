@@ -6,6 +6,7 @@ import type { Track, TrackPoint } from '../types'
 import { useWakeLock } from '../hooks/useWakeLock'
 import { useAuth } from '../contexts/AuthContext'
 import { saveTrack } from '../services/tracksService'
+import { bearing, destination } from '../utils/geo'
 
 function MapUpdater({ center }: { center: [number, number] }) {
   const map = useMap()
@@ -69,7 +70,7 @@ export function RecordScreen() {
 
     const granted = await requestWakeLock()
     if (!granted && wakeLockSupported) {
-      setError('No se pudo mantener la pantalla encendida. La grabación continuará.')
+      setError('No s\'ha pogut mantenir la pantalla encesa. La gravació continuarà.')
     }
 
     const watchId = navigator.geolocation.watchPosition(
@@ -120,7 +121,7 @@ export function RecordScreen() {
     if (pointsToSave.length > 1) {
       const track: Track = {
         id: crypto.randomUUID(),
-        name: `Track ${new Date().toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}`,
+        name: `Track ${new Date().toLocaleString('ca-ES', { dateStyle: 'short', timeStyle: 'short' })}`,
         points: pointsToSave,
         startTime: pointsToSave[0].timestamp,
         endTime: pointsToSave[pointsToSave.length - 1].timestamp,
@@ -147,6 +148,22 @@ export function RecordScreen() {
   const displayPosition = user ? currentPosition : mapCenter
   const showPositionMarker = displayPosition !== null
 
+  // Línia d'orientació: direcció del moviment (calen 2+ punts i haver-se mogut >2m)
+  let directionLine: [number, number][] | null = null
+  if (user && currentPosition && points.length >= 2) {
+    const a = points[points.length - 2]
+    const b = points[points.length - 1]
+    const distM = Math.hypot(
+      (b.lng - a.lng) * 111320 * Math.cos((a.lat * Math.PI) / 180),
+      (b.lat - a.lat) * 110540
+    )
+    if (distM >= 2) {
+      const bng = bearing(a.lat, a.lng, b.lat, b.lng)
+      const end = destination(currentPosition[0], currentPosition[1], bng, 18)
+      directionLine = [currentPosition, end]
+    }
+  }
+
   return (
     <div className="record-screen">
       <div className="map-container">
@@ -171,23 +188,33 @@ export function RecordScreen() {
                   center={currentPosition}
                   radius={accuracy}
                   pathOptions={{
-                    color: '#2563eb',
-                    fillColor: '#2563eb',
-                    fillOpacity: 0.15,
-                    weight: 2,
+                    color: '#4285F4',
+                    fillColor: '#4285F4',
+                    fillOpacity: 0.12,
+                    weight: 1.5,
                   }}
                 />
               )}
               <CircleMarker
                 center={displayPosition}
-                radius={10}
+                radius={5}
                 pathOptions={{
-                  color: '#2563eb',
-                  fillColor: '#2563eb',
+                  color: '#4285F4',
+                  fillColor: '#4285F4',
                   fillOpacity: 1,
-                  weight: 3,
+                  weight: 2,
                 }}
               />
+              {directionLine && (
+                <Polyline
+                  positions={directionLine}
+                  pathOptions={{
+                    color: '#4285F4',
+                    weight: 3,
+                    opacity: 0.9,
+                  }}
+                />
+              )}
             </>
           ) : null}
           {latlngs.length > 1 && (
@@ -202,12 +229,12 @@ export function RecordScreen() {
       {user && (
       <div className="status-bar">
         {error && <div className="status-error">{error}</div>}
-        {saveSuccess && <div className="status-success">Track guardado y subido al servidor</div>}
+        {saveSuccess && <div className="status-success">Track guardat i pujat al servidor</div>}
         <div className="status-row">
             <span className={isRecording ? 'rec-dot' : ''}>
-              {isRecording ? 'Grabando' : 'Pausado'}
+              {isRecording ? 'Gravant' : 'Pausat'}
             </span>
-            <span>{points.length} puntos</span>
+            <span>{points.length} punts</span>
             {isRecording && <span>{formatDuration(duration)}</span>}
             {accuracy !== null && <span>±{Math.round(accuracy)}m</span>}
         </div>
@@ -217,14 +244,14 @@ export function RecordScreen() {
       <div className="record-actions">
         {!user ? (
           <div className="login-required-overlay">
-            <p>Inicia sesión para grabar</p>
+            <p>Inicia sessió per gravar</p>
             <Link to="/login" className="btn-record start">
-              Entrar o crear cuenta
+              Entrar o crear compte
             </Link>
           </div>
         ) : !isRecording ? (
           <button type="button" className="btn-record start" onClick={startRecording}>
-            Iniciar grabación
+            Iniciar gravació
           </button>
         ) : (
           <button
@@ -270,7 +297,7 @@ export function RecordScreen() {
               {holdProgress > 0 && holdProgress < 1 ? (
                 `Mantén ${Math.ceil(3 - holdProgress * 3)} s`
               ) : (
-                'Mantén 3 s para detener'
+                'Mantén 3 s per aturar'
               )}
             </span>
             {holdProgress > 0 && (

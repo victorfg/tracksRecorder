@@ -32,7 +32,7 @@ export function AuthForm() {
       return
     }
     if (mode === 'signup') {
-      setSuccess('Cuenta creada. Revisa tu email para confirmar (si está configurado).')
+      setSuccess('Compte creat. Revisa el teu email per confirmar (si està configurat).')
     } else {
       navigate('/tracks')
     }
@@ -41,9 +41,9 @@ export function AuthForm() {
   return (
     <div className="auth-form">
       <Link to="/" className="auth-back">
-        ← Volver
+        ← Tornar
       </Link>
-      <h2>{mode === 'signin' ? 'Iniciar sesión' : 'Crear cuenta'}</h2>
+      <h2>{mode === 'signin' ? 'Iniciar sessió' : 'Crear compte'}</h2>
       <form onSubmit={handleSubmit}>
         <input
           type="email"
@@ -55,7 +55,7 @@ export function AuthForm() {
         />
         <input
           type="password"
-          placeholder="Contraseña"
+          placeholder="Contrasenya"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -65,7 +65,7 @@ export function AuthForm() {
         {error && <p className="auth-error">{error}</p>}
         {success && <p className="auth-success">{success}</p>}
         <button type="submit" disabled={loading}>
-          {loading ? '...' : mode === 'signin' ? 'Entrar' : 'Crear cuenta'}
+          {loading ? '...' : mode === 'signin' ? 'Entrar' : 'Crear compte'}
         </button>
       </form>
       <button
@@ -77,7 +77,7 @@ export function AuthForm() {
           setSuccess(null)
         }}
       >
-        {mode === 'signin' ? 'Crear cuenta' : 'Ya tengo cuenta'}
+        {mode === 'signin' ? 'Crear compte' : 'Ja tinc compte'}
       </button>
     </div>
   )

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { getTracks, deleteTrack } from '../services/tracksService'
+import { ConfirmModal } from './ConfirmModal'
 import type { Track } from '../types'
 import { calculateTrackDistance, formatDistance, formatDuration } from '../utils/geo'
 
@@ -9,6 +10,7 @@ export function TracksList() {
   const { user } = useAuth()
   const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(true)
+  const [trackToDelete, setTrackToDelete] = useState<Track | null>(null)
 
   useEffect(() => {
     getTracks(user?.uid).then((data) => {
@@ -17,10 +19,17 @@ export function TracksList() {
     })
   }, [user?.uid])
 
+  const handleConfirmDelete = async () => {
+    if (!trackToDelete || !user?.uid) return
+    await deleteTrack(trackToDelete.id, user.uid)
+    setTracks((prev) => prev.filter((t) => t.id !== trackToDelete.id))
+    setTrackToDelete(null)
+  }
+
   if (loading) {
     return (
       <div className="tracks-list">
-        <p className="tracks-loading">Cargando tracks...</p>
+        <p className="tracks-loading">Carregant tracks...</p>
       </div>
     )
   }
@@ -28,20 +37,20 @@ export function TracksList() {
   if (tracks.length === 0) {
     return (
       <div className="tracks-list">
-        <p className="tracks-empty">
-          No hay tracks guardados.
-          <br />
-          Los tracks se guardan en este dispositivo cuando grabas.
-        </p>
-        <p className="tracks-hint">
-          Graba un track desde la pantalla principal para verlo aquí.
-        </p>
+        <h2 className="tracks-list-title">Els meus tracks</h2>
+        <div className="tracks-empty-state">
+          <p className="tracks-empty">Encore no tens tracks guardats</p>
+          <p className="tracks-hint">
+            Ves a la pantalla principal, inicia una grabació i mantén premut 3 segons per guardar. Les teves rutes es sincronitzaran entre dispositius.
+          </p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="tracks-list">
+      <h2 className="tracks-list-title">Els meus tracks</h2>
       <ul className="tracks-ul">
         {tracks.map((track) => {
           const distance = calculateTrackDistance(track.points)
@@ -58,21 +67,18 @@ export function TracksList() {
                 <span className="track-name">{track.name}</span>
                 <span className="track-meta">
                   {formatDistance(distance)} · {formatDuration(duration)} ·{' '}
-                  {track.points.length} puntos
+                  {track.points.length} punts
                 </span>
               </Link>
               <button
                 type="button"
                 className="track-delete-btn"
-                onClick={async (e) => {
+                onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  if (window.confirm('¿Eliminar este track?')) {
-                    await deleteTrack(track.id, user?.uid)
-                    setTracks((prev) => prev.filter((t) => t.id !== track.id))
-                  }
+                  setTrackToDelete(track)
                 }}
-                title="Eliminar"
+                title="Eliminar track"
               >
                 ×
               </button>
@@ -80,6 +86,17 @@ export function TracksList() {
           )
         })}
       </ul>
+      {trackToDelete && (
+        <ConfirmModal
+          title="Eliminar track"
+          message="La ruta s'eliminarà de manera permanent. No es podrà desfer."
+          confirmLabel="Eliminar"
+          cancelLabel="Cancel·lar"
+          confirmDanger
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setTrackToDelete(null)}
+        />
+      )}
     </div>
   )
 }
