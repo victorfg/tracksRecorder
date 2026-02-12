@@ -177,7 +177,7 @@ export function RecordScreen() {
                 />
               )}
               <CircleMarker
-                center={displayPosition}
+                center={displayPosition as [number, number]}
                 radius={10}
                 pathOptions={{
                   color: '#2563eb',
