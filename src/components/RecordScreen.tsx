@@ -9,7 +9,16 @@ function MapUpdater({ center }: { center: [number, number] }) {
   const map = useMap()
   useEffect(() => {
     map.setView(center, map.getZoom())
+    map.invalidateSize()
   }, [map, center])
+  return null
+}
+
+function MapInit() {
+  const map = useMap()
+  useEffect(() => {
+    map.invalidateSize()
+  }, [map])
   return null
 }
 
@@ -125,6 +134,7 @@ export function RecordScreen() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          <MapInit />
           {currentPosition && <MapUpdater center={currentPosition} />}
           {latlngs.length > 1 && (
             <Polyline
