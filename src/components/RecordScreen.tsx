@@ -107,7 +107,7 @@ export function RecordScreen() {
         endTime: pointsToSave[pointsToSave.length - 1].timestamp,
         createdAt: Date.now(),
       }
-      await saveTrack(track, user?.id)
+      await saveTrack(track, user?.uid)
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 4000)
     }

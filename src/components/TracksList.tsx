@@ -11,11 +11,11 @@ export function TracksList() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getTracks(user?.id).then((data) => {
+    getTracks(user?.uid).then((data) => {
       setTracks(data)
       setLoading(false)
     })
-  }, [user?.id])
+  }, [user?.uid])
 
   if (loading) {
     return (

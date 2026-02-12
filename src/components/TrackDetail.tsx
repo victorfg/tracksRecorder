@@ -27,12 +27,12 @@ export function TrackDetail() {
 
   useEffect(() => {
     if (id) {
-      getTrack(id, user?.id).then((data) => {
+      getTrack(id, user?.uid).then((data) => {
         setTrack(data ?? null)
         setLoading(false)
       })
     }
-  }, [id, user?.id])
+  }, [id, user?.uid])
 
   if (loading) {
     return (
