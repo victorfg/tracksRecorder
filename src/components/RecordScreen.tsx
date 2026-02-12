@@ -86,6 +86,24 @@ function MapInit() {
   return null
 }
 
+function CenterOnMeButton({ position }: { position: [number, number] }) {
+  const map = useMap()
+  const handleClick = () => {
+    map.setView(position, RECORD_ZOOM, { animate: true, duration: 0.5 })
+  }
+  return (
+    <button
+      type="button"
+      className="center-on-me-btn"
+      onClick={handleClick}
+      title="Centrar en la meva posició"
+      aria-label="Centrar en la meva posició"
+    >
+      ⌖
+    </button>
+  )
+}
+
 function BasemapChangeHandler({ basemapId }: { basemapId: string }) {
   const map = useMap()
   useEffect(() => {
@@ -275,6 +293,7 @@ export function RecordScreen() {
           )}
           {showPositionMarker && displayPosition ? (
             <>
+              <CenterOnMeButton position={displayPosition} />
               {user && currentPosition && (
                 <MapFollowUpdater
                   position={currentPosition}

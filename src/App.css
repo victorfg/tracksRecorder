@@ -269,6 +269,39 @@
   border: none !important;
 }
 
+/* Botó "centrar en mi posición" - solo mobile en home */
+.center-on-me-btn {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--accent);
+  font-size: 1.25rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.center-on-me-btn:hover {
+  background: var(--bg-hover);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+@media (min-width: 768px) {
+  .center-on-me-btn {
+    display: none;
+  }
+}
+
 .status-bar {
   flex-shrink: 0;
   padding: 0.75rem 1.25rem;
