@@ -1,0 +1,108 @@
+.track-edit-control {
+  position: absolute;
+  bottom: calc(1rem + 44px + 0.5rem); /* above MapLayerControl */
+  right: 1rem;
+  z-index: 1000;
+}
+
+.track-edit-map-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.track-edit-map-btn:hover {
+  background: var(--bg-hover);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.track-edit-map-btn.active {
+  background: var(--accent-muted);
+  color: var(--accent);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.track-edit-menu {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 220px;
+  padding: 0.75rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.track-edit-menu-title {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.track-edit-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.track-edit-opt {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.track-edit-opt:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.track-edit-opt.active {
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.track-edit-opt-primary {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.track-edit-opt-primary:hover:not(:disabled) {
+  background: var(--accent-muted);
+}
+
+.track-edit-opt-danger {
+  color: var(--danger);
+}
+
+.track-edit-opt-danger:hover:not(:disabled) {
+  background: var(--danger-muted);
+}
+
+.track-edit-opt:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

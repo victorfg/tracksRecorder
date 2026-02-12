@@ -5,20 +5,24 @@
 html {
   -webkit-tap-highlight-color: transparent;
   height: 100%;
+  min-height: 100dvh;
 }
 
 body {
   margin: 0;
   height: 100%;
+  min-height: 100dvh;
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 15px;
   line-height: 1.5;
+  background: #0c1222;
 }
 
 #root {
   height: 100%;
-  min-height: 100vh;
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }

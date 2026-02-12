@@ -1,0 +1,11 @@
+.elevation-profile {
+  width: 100%;
+  height: 110px;
+  background: var(--accent-muted);
+  border-radius: var(--radius-sm);
+}
+
+.elevation-profile-axistext {
+  font-size: 9px;
+  fill: var(--text-muted);
+}

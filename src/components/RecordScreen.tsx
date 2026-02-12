@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MapContainer, TileLayer, Polyline, Circle, CircleMarker, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline, Circle, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Track, TrackPoint } from '../types'
 import { useWakeLock } from '../hooks/useWakeLock'
 import { useAuth } from '../contexts/AuthContext'
 import { saveTrack } from '../services/tracksService'
-import { bearing, destination } from '../utils/geo'
+import { bearing } from '../utils/geo'
+import { useMapLayer } from '../contexts/MapLayerContext'
+import { LocationMarker } from './LocationMarker'
+import { MapLayerControl } from './MapLayerControl'
 
 function MapUpdater({ center }: { center: [number, number] }) {
   const map = useMap()
@@ -25,7 +28,17 @@ function MapInit() {
   return null
 }
 
-const DEFAULT_CENTER: [number, number] = [40.4168, -3.7038]
+function BasemapChangeHandler({ basemapId }: { basemapId: string }) {
+  const map = useMap()
+  useEffect(() => {
+    map.invalidateSize()
+    const t = setTimeout(() => map.invalidateSize(), 100)
+    return () => clearTimeout(t)
+  }, [map, basemapId])
+  return null
+}
+
+const DEFAULT_CENTER: [number, number] = [41.6, 1.5] // Catalunya
 
 export function RecordScreen() {
   const [isRecording, setIsRecording] = useState(false)
@@ -46,6 +59,7 @@ export function RecordScreen() {
 
   const { isSupported: wakeLockSupported, request: requestWakeLock, release: releaseWakeLock } = useWakeLock()
   const { user } = useAuth()
+  const { basemap } = useMapLayer()
 
   // Obtener ubicación para centrar el mapa cuando no está logueado
   useEffect(() => {
@@ -145,11 +159,15 @@ export function RecordScreen() {
   const latlngs: [number, number][] = points.map((p) => [p.lat, p.lng])
   const center: [number, number] = currentPosition ?? (points[0] ? [points[0].lat, points[0].lng] : mapCenter ?? DEFAULT_CENTER)
 
+  const isDefaultView =
+    center[0] === DEFAULT_CENTER[0] && center[1] === DEFAULT_CENTER[1]
+  const zoom = isDefaultView ? 8 : 17
+
   const displayPosition = user ? currentPosition : mapCenter
   const showPositionMarker = displayPosition !== null
 
-  // Línia d'orientació: direcció del moviment (calen 2+ punts i haver-se mogut >2m)
-  let directionLine: [number, number][] | null = null
+  // Direcció del moviment per la icona (calen 2+ punts i haver-se mogut >2m)
+  let directionBearing: number | null = null
   if (user && currentPosition && points.length >= 2) {
     const a = points[points.length - 2]
     const b = points[points.length - 1]
@@ -158,9 +176,7 @@ export function RecordScreen() {
       (b.lat - a.lat) * 110540
     )
     if (distM >= 2) {
-      const bng = bearing(a.lat, a.lng, b.lat, b.lng)
-      const end = destination(currentPosition[0], currentPosition[1], bng, 18)
-      directionLine = [currentPosition, end]
+      directionBearing = bearing(a.lat, a.lng, b.lat, b.lng)
     }
   }
 
@@ -169,16 +185,19 @@ export function RecordScreen() {
       <div className="map-container">
         <MapContainer
           center={center}
-          zoom={17}
+          zoom={zoom}
           className="map"
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            key={basemap.id}
+            attribution={basemap.attribution}
+            url={basemap.url}
+            tms={basemap.tms}
           />
           <MapInit />
+          <BasemapChangeHandler basemapId={basemap.id} />
           {!user && mapCenter && <MapUpdater center={mapCenter} />}
           {showPositionMarker && displayPosition ? (
             <>
@@ -195,26 +214,10 @@ export function RecordScreen() {
                   }}
                 />
               )}
-              <CircleMarker
-                center={displayPosition}
-                radius={5}
-                pathOptions={{
-                  color: '#4285F4',
-                  fillColor: '#4285F4',
-                  fillOpacity: 1,
-                  weight: 2,
-                }}
+              <LocationMarker
+                position={displayPosition}
+                bearing={user ? directionBearing : null}
               />
-              {directionLine && (
-                <Polyline
-                  positions={directionLine}
-                  pathOptions={{
-                    color: '#4285F4',
-                    weight: 3,
-                    opacity: 0.9,
-                  }}
-                />
-              )}
             </>
           ) : null}
           {latlngs.length > 1 && (
@@ -224,10 +227,11 @@ export function RecordScreen() {
             />
           )}
         </MapContainer>
+        <MapLayerControl />
       </div>
 
       {user && (
-      <div className="status-bar">
+      <div className={`status-bar ${!isRecording ? 'status-bar-desktop-hide' : ''}`}>
         {error && <div className="status-error">{error}</div>}
         {saveSuccess && <div className="status-success">Track guardat i pujat al servidor</div>}
         <div className="status-row">
@@ -241,7 +245,7 @@ export function RecordScreen() {
       </div>
       )}
 
-      <div className="record-actions">
+      <div className={`record-actions ${user && !isRecording ? 'record-actions-start-only' : ''} ${!user ? 'record-actions-login-required' : ''}`}>
         {!user ? (
           <div className="login-required-overlay">
             <p>Inicia sessió per gravar</p>
@@ -250,7 +254,11 @@ export function RecordScreen() {
             </Link>
           </div>
         ) : !isRecording ? (
-          <button type="button" className="btn-record start" onClick={startRecording}>
+          <button
+            type="button"
+            className="btn-record start"
+            onClick={startRecording}
+          >
             Iniciar gravació
           </button>
         ) : (

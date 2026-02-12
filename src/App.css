@@ -25,8 +25,7 @@
 .app {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 100vh;
+  flex: 1;
   min-height: 100dvh;
   background: var(--bg-primary);
 }
@@ -193,6 +192,16 @@
   color: var(--danger);
 }
 
+.nav-link-map {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .nav-link-map {
+    display: inline-flex;
+  }
+}
+
 /* Mobile header */
 @media (max-width: 600px) {
   .app-logo-short { display: inline; }
@@ -235,6 +244,13 @@
   flex: 1;
   position: relative;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-container > .map {
+  flex: 1;
+  min-height: 0;
 }
 
 .map {
@@ -245,6 +261,12 @@
 .leaflet-container {
   font-family: inherit;
   height: 100% !important;
+  min-height: 100%;
+}
+
+.location-marker-icon {
+  background: none !important;
+  border: none !important;
 }
 
 .status-bar {
@@ -301,6 +323,17 @@
   padding: 1.25rem;
   background: var(--bg-primary);
   border-top: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 768px) {
+  .record-actions.record-actions-start-only,
+  .record-actions.record-actions-login-required {
+    display: none;
+  }
+
+  .status-bar.status-bar-desktop-hide {
+    display: none;
+  }
 }
 
 .btn-record {
@@ -449,7 +482,68 @@
   border-right: none;
 }
 
+.track-edit-btn {
+  flex-shrink: 0;
+  width: 40px;
+  padding: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-left: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.track-edit-btn:hover {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
 .track-item .track-delete-btn {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.track-edit-row {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--accent);
+  border-right: none;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  background: var(--bg-elevated);
+}
+
+.track-name-input {
+  flex: 1;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.track-save-btn {
+  flex-shrink: 0;
+  width: 40px;
+  padding: 0;
+  background: var(--accent-muted);
+  border: none;
+  border-left: 1px solid var(--border-subtle);
+  color: var(--accent);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.track-save-btn:hover {
+  background: rgba(16, 185, 129, 0.25);
+}
+
+.track-item .track-edit-row + .track-delete-btn {
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
@@ -471,7 +565,7 @@
   padding: 0;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-left: none;
+  border-left: 1px solid var(--border-subtle);
   color: var(--text-muted);
   font-size: 1.25rem;
   line-height: 1;
@@ -479,9 +573,14 @@
   transition: background var(--transition), color var(--transition);
 }
 
-.track-delete-btn:hover {
+.track-delete-btn:hover:not(:disabled) {
   background: var(--danger-muted);
   color: var(--danger);
+}
+
+.track-delete-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* Track detail */
@@ -494,9 +593,90 @@
 
 .track-detail-header {
   flex-shrink: 0;
-  padding: 1.25rem;
+}
+
+.track-detail-header-compact {
+  min-height: auto;
+  padding: 0.875rem 1.25rem;
+  overflow: visible;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+.track-info-title {
+  margin: 0 0 0.625rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-info-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 1.5rem;
+}
+
+.track-info-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.track-info-stat-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.track-info-stat-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.track-detail-header::-webkit-scrollbar {
+  width: 6px;
+}
+.track-detail-header::-webkit-scrollbar-track {
+  background: transparent;
+}
+.track-detail-header::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 3px;
+  opacity: 0.5;
+}
+.track-detail-header::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.track-detail-resize-handle {
+  flex-shrink: 0;
+  height: 6px;
+  cursor: ns-resize;
+  background: var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition);
+  touch-action: none;
+}
+.track-detail-resize-handle:hover,
+.track-detail-resize-handle:active {
+  background: var(--text-muted);
+}
+.track-detail-resize-handle::after {
+  content: '';
+  width: 32px;
+  height: 2px;
+  background: var(--text-muted);
+  border-radius: 1px;
+  opacity: 0.6;
 }
 
 .track-back {
@@ -507,7 +687,7 @@
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   transition: color var(--transition);
 }
 
@@ -515,32 +695,36 @@
   color: var(--accent-hover);
 }
 
-.track-detail-title {
-  margin: 0 0 1rem 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
+.track-stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.track-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
+.track-stats-row .track-stat-card {
+  flex: 1 1 4.5rem;
+  min-width: 0;
 }
 
+.track-stats-row .track-stat-card-name {
+  flex: 1 1 100%;
+}
+
+.track-stats-row .track-stat-card-name .track-stat-value {
+  word-break: break-word;
+}
 .track-stat-card {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.875rem 1rem;
+  gap: 0.125rem;
+  padding: 0.5rem 0.625rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
 }
 
 .track-stat-label {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -548,26 +732,225 @@
 }
 
 .track-stat-value {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
-.track-stat-value.track-stat-distance {
-  color: var(--accent);
-  font-size: 1.2rem;
+.track-detail-section {
+  margin-bottom: 1rem;
 }
 
-.track-stat-card:first-child {
-  border-color: rgba(16, 185, 129, 0.3);
+.track-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.track-detail-section-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.track-operations-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.track-operation-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.track-slice-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.track-slice-row input {
+  width: 3.5rem;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.9rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+
+.track-slice-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.track-slice-sep,
+.track-slice-unit {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.track-op-btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+  border: 1px solid transparent;
+}
+
+.track-op-btn:hover:not(:disabled) {
+  opacity: 0.95;
+}
+
+.track-op-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.track-op-btn-primary {
   background: var(--accent-muted);
+  color: var(--accent);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
+.track-op-btn-primary:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.25);
+}
+
+.track-op-btn-secondary {
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.track-op-btn-secondary:hover:not(:disabled) {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+/* Vèrtexs editables al mapa */
+.track-edit-vertex {
+  background: none !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.track-edit-vertex .track-edit-vertex-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  cursor: grab;
+}
+
+.track-edit-vertex:active .track-edit-vertex-dot {
+  cursor: grabbing;
+}
+
+.track-edit-vertex-selected .track-edit-vertex-dot {
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
+  border: 3px solid white;
+  box-shadow: 0 0 0 2px var(--accent);
+}
 
 .track-detail-map {
   flex: 1;
   min-height: 0;
+  position: relative;
+}
+
+.track-edit-selected-bar {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+}
+
+.track-edit-selected-bar span {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.track-edit-selected-eliminar {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--danger-muted);
+  color: var(--danger);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.track-edit-selected-eliminar:hover:not(:disabled) {
+  background: var(--danger);
+  color: white;
+}
+
+.track-edit-selected-eliminar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.track-edit-add-hint {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  right: 5rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  background: rgba(12, 18, 34, 0.9);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  z-index: 1000;
+  pointer-events: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+  line-height: 1.5;
+}
+
+.track-edit-add-hint span {
+  white-space: nowrap;
+}
+
+.track-edit-add-hint span::after {
+  content: ' · ';
+  margin-left: 1rem;
+  color: var(--text-muted);
+}
+
+.track-edit-add-hint span:last-child::after {
+  content: '';
+  margin: 0;
+}
+
+.track-edit-add-hint strong {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* Record - login overlay */

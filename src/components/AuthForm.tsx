@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import './AuthForm.css'
 
@@ -40,9 +40,6 @@ export function AuthForm() {
 
   return (
     <div className="auth-form">
-      <Link to="/" className="auth-back">
-        ← Tornar
-      </Link>
       <h2>{mode === 'signin' ? 'Iniciar sessió' : 'Crear compte'}</h2>
       <form onSubmit={handleSubmit}>
         <input

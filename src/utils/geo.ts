@@ -33,8 +33,30 @@ export function calculateTrackDistance(points: TrackPoint[]): number {
   return total
 }
 
+/** Distàncies acumulades en metres fins a cada punt (primer = 0) */
+export function cumulativeDistances(points: TrackPoint[]): number[] {
+  const out: number[] = [0]
+  for (let i = 1; i < points.length; i++) {
+    out.push(
+      out[i - 1] +
+        haversineDistance(
+          points[i - 1].lat,
+          points[i - 1].lng,
+          points[i].lat,
+          points[i].lng
+        )
+    )
+  }
+  return out
+}
+
 export function formatDistance(meters: number): string {
   if (meters < 1000) return `${Math.round(meters)} m`
+  return `${(meters / 1000).toFixed(2)} km`
+}
+
+/** Sempre en km, 2 decimals */
+export function formatDistanceKm(meters: number): string {
   return `${(meters / 1000).toFixed(2)} km`
 }
 

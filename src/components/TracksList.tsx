@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { getTracks, deleteTrack } from '../services/tracksService'
+import { getTracks, deleteTrack, saveTrack } from '../services/tracksService'
 import { ConfirmModal } from './ConfirmModal'
 import type { Track } from '../types'
 import { calculateTrackDistance, formatDistance, formatDuration } from '../utils/geo'
@@ -11,6 +11,8 @@ export function TracksList() {
   const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(true)
   const [trackToDelete, setTrackToDelete] = useState<Track | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
 
   useEffect(() => {
     getTracks(user?.uid).then((data) => {
@@ -18,6 +20,29 @@ export function TracksList() {
       setLoading(false)
     })
   }, [user?.uid])
+
+  const startEdit = (track: Track) => {
+    setEditingId(track.id)
+    setEditValue(track.name)
+  }
+
+  const saveEdit = async () => {
+    if (!editingId || !user?.uid) return
+    const track = tracks.find((t) => t.id === editingId)
+    const trimmed = editValue.trim()
+    if (!track || trimmed === track.name || trimmed === '') {
+      setEditingId(null)
+      return
+    }
+    const updated = { ...track, name: trimmed }
+    await saveTrack(updated, user.uid)
+    setTracks((prev) => prev.map((t) => (t.id === editingId ? updated : t)))
+    setEditingId(null)
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+  }
 
   const handleConfirmDelete = async () => {
     if (!trackToDelete || !user?.uid) return
@@ -61,15 +86,56 @@ export function TracksList() {
                 1000
               : 0
 
+          const isEditing = editingId === track.id
+
           return (
             <li key={track.id} className="track-item">
-              <Link to={`/tracks/${track.id}`} className="track-link">
-                <span className="track-name">{track.name}</span>
-                <span className="track-meta">
-                  {formatDistance(distance)} · {formatDuration(duration)} ·{' '}
-                  {track.points.length} punts
-                </span>
-              </Link>
+              {isEditing ? (
+                <div className="track-edit-row">
+                  <input
+                    type="text"
+                    className="track-name-input"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={saveEdit}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveEdit()
+                      if (e.key === 'Escape') cancelEdit()
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="track-save-btn"
+                    onClick={saveEdit}
+                    title="Desar"
+                  >
+                    ✓
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <Link to={`/tracks/${track.id}`} className="track-link">
+                    <span className="track-name">{track.name}</span>
+                    <span className="track-meta">
+                      {formatDistance(distance)} · {formatDuration(duration)} ·{' '}
+                      {track.points.length} punts
+                    </span>
+                  </Link>
+                  <button
+                    type="button"
+                    className="track-edit-btn"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      startEdit(track)
+                    }}
+                    title="Editar nom"
+                  >
+                    ✎
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 className="track-delete-btn"
@@ -78,6 +144,7 @@ export function TracksList() {
                   e.stopPropagation()
                   setTrackToDelete(track)
                 }}
+                disabled={isEditing}
                 title="Eliminar track"
               >
                 ×

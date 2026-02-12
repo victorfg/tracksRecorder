@@ -1,37 +1,229 @@
-import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useParams, useLocation, Link } from 'react-router-dom'
 import L from 'leaflet'
-import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useAuth } from '../contexts/AuthContext'
-import { getTrack } from '../services/tracksService'
+import { useMapLayer } from '../contexts/MapLayerContext'
+import { getTrack, saveTrack } from '../services/tracksService'
 import type { Track } from '../types'
-import { calculateTrackDistance, formatDistance, formatDuration } from '../utils/geo'
+import {
+  calculateTrackDistance,
+  formatDistanceKm,
+  formatDuration,
+} from '../utils/geo'
+import { addPointOnLineAt } from '../utils/turfUtils'
+import { MapLayerControl } from './MapLayerControl'
+import { TrackEditControl } from './TrackEditControl'
 
-function FitBounds({ positions }: { positions: [number, number][] }) {
+function BasemapChangeHandler({ basemapId }: { basemapId: string }) {
   const map = useMap()
   useEffect(() => {
-    if (positions.length === 0) return
+    map.invalidateSize()
+    const t = setTimeout(() => map.invalidateSize(), 100)
+    return () => clearTimeout(t)
+  }, [map, basemapId])
+  return null
+}
+
+function MapResizeHandler({ infoHeight }: { infoHeight: number }) {
+  const map = useMap()
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 50)
+    return () => clearTimeout(t)
+  }, [map, infoHeight])
+  return null
+}
+
+function FitBounds({
+  positions,
+  enabled = true,
+}: {
+  positions: [number, number][]
+  enabled?: boolean
+}) {
+  const map = useMap()
+  useEffect(() => {
+    if (!enabled || positions.length === 0) return
     if (positions.length === 1) {
       map.setView(positions[0], 17)
       return
     }
     const bounds = L.latLngBounds(positions)
     map.fitBounds(bounds, { padding: [24, 24], maxZoom: 18 })
-  }, [map, positions])
+  }, [map, positions, enabled])
   return null
+}
+
+const DEFAULT_TRACK_COLOR = '#22c55e'
+const DEFAULT_TRACK_WEIGHT = 5
+
+const vertexIcon = L.divIcon({
+  className: 'track-edit-vertex',
+  html: '<div class="track-edit-vertex-dot"></div>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+})
+
+const selectedVertexIcon = L.divIcon({
+  className: 'track-edit-vertex track-edit-vertex-selected',
+  html: '<div class="track-edit-vertex-dot"></div>',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+})
+
+type EditableMapContentProps = {
+  track: Track
+  editMode: boolean
+  selectedIndex: number | null
+  onUpdatePoint: (index: number, lat: number, lng: number) => void
+  onAddPointAt: (lat: number, lng: number) => void
+  onSelectPoint: (index: number | null) => void
+}
+
+function EditableMapContent({
+  track,
+  editMode,
+  selectedIndex,
+  onUpdatePoint,
+  onAddPointAt,
+  onSelectPoint,
+}: EditableMapContentProps) {
+  const latlngs: [number, number][] = track.points.map((p) => [p.lat, p.lng])
+
+  return (
+    <>
+      <FitBounds positions={latlngs} enabled={!editMode} />
+      {latlngs.length > 1 && (
+        <Polyline
+          positions={latlngs}
+          pathOptions={{
+            color: DEFAULT_TRACK_COLOR,
+            weight: editMode ? 4 : DEFAULT_TRACK_WEIGHT,
+            opacity: 0.9,
+          }}
+          eventHandlers={
+            editMode
+              ? {
+                  dblclick: (e: L.LeafletMouseEvent) => {
+                    const { lat, lng } = e.latlng
+                    onAddPointAt(lat, lng)
+                  },
+                }
+              : undefined
+          }
+        />
+      )}
+      {editMode &&
+        track.points.map((p, i) => (
+          <Marker
+            key={i}
+            position={[p.lat, p.lng]}
+            icon={selectedIndex === i ? selectedVertexIcon : vertexIcon}
+            draggable
+            eventHandlers={{
+              dragend: (e) => {
+                const { lat, lng } = e.target.getLatLng()
+                onUpdatePoint(i, lat, lng)
+              },
+              click: () => onSelectPoint(selectedIndex === i ? null : i),
+            }}
+          />
+        ))}
+    </>
+  )
 }
 
 export function TrackDetail() {
   const { id } = useParams<{ id: string }>()
+  const location = useLocation()
+  const backTo = (location.state as { from?: string } | null)?.from ?? '/tracks'
+
   const { user } = useAuth()
+  const { basemap } = useMapLayer()
   const [track, setTrack] = useState<Track | null>(null)
   const [loading, setLoading] = useState(true)
+  const [processing, setProcessing] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [isDesktop, setIsDesktop] = useState(false)
+  const trackDetailRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+  const savedTrackRef = useRef<Track | null>(null)
+  const hasUnsavedChangesRef = useRef(false)
+
+  const updatePoint = (index: number, lat: number, lng: number) => {
+    if (!track) return
+    hasUnsavedChangesRef.current = true
+    const next = [...track.points]
+    next[index] = { ...next[index], lat, lng }
+    setTrack({ ...track, points: next })
+  }
+
+  const removePoint = (index: number) => {
+    if (!track || track.points.length <= 2) return
+    hasUnsavedChangesRef.current = true
+    const next = track.points.filter((_, i) => i !== index)
+    setTrack({
+      ...track,
+      points: next,
+      startTime: next[0]?.timestamp ?? track.startTime,
+      endTime: next[next.length - 1]?.timestamp ?? track.endTime,
+    })
+    setSelectedIndex(null)
+  }
+
+  const addPointAtClick = (lat: number, lng: number) => {
+    if (!track || track.points.length < 2) return
+    hasUnsavedChangesRef.current = true
+    const result = addPointOnLineAt(track.points, lat, lng)
+    if (!result) return
+    const { point, insertAfterIndex } = result
+    const next = [...track.points]
+    next.splice(insertAfterIndex + 1, 0, point)
+    setTrack({
+      ...track,
+      points: next,
+      startTime: next[0].timestamp,
+      endTime: next[next.length - 1].timestamp,
+    })
+  }
+
+  const handleSavePoints = async () => {
+    if (!track || track.points.length < 2) return
+    setProcessing(true)
+    await saveTrack(track, user?.uid ?? undefined)
+    savedTrackRef.current = JSON.parse(JSON.stringify(track))
+    hasUnsavedChangesRef.current = false
+    setProcessing(false)
+    setEditMode(false)
+    setSelectedIndex(null)
+  }
+
+  const handleToggleEditMode = () => {
+    if (editMode) {
+      if (hasUnsavedChangesRef.current && savedTrackRef.current) {
+        setTrack(JSON.parse(JSON.stringify(savedTrackRef.current)))
+        hasUnsavedChangesRef.current = false
+      }
+      setSelectedIndex(null)
+    }
+    setEditMode((v) => !v)
+  }
 
   useEffect(() => {
     if (id) {
       getTrack(id, user?.uid).then((data) => {
-        setTrack(data ?? null)
+        const t = data ?? null
+        setTrack(t)
+        savedTrackRef.current = t ? JSON.parse(JSON.stringify(t)) : null
+        hasUnsavedChangesRef.current = false
         setLoading(false)
       })
     }
@@ -49,14 +241,11 @@ export function TrackDetail() {
     return (
       <div className="track-detail">
         <p className="tracks-empty">Track no trobat</p>
-        <Link to="/tracks" className="track-back">
-          Tornar als meus tracks
-        </Link>
+        <Link to={backTo} className="track-back">Els meus tracks</Link>
       </div>
     )
   }
 
-  const latlngs: [number, number][] = track.points.map((p) => [p.lat, p.lng])
   const distance = calculateTrackDistance(track.points)
   const duration =
     track.points.length > 1
@@ -64,31 +253,57 @@ export function TrackDetail() {
       : 0
   const center: [number, number] = track.points[0]
     ? [track.points[0].lat, track.points[0].lng]
-    : [40.4168, -3.7038]
+    : [41.6, 1.5]
+
+  const hasAltitude = track.points.some((p) => p.altitude != null)
+  const altValues = track.points
+    .map((p) => p.altitude)
+    .filter((a): a is number => a != null)
+  const altMin = altValues.length ? Math.min(...altValues) : null
+  const altMax = altValues.length ? Math.max(...altValues) : null
 
   return (
-    <div className="track-detail">
-      <div className="track-detail-header">
-        <Link to="/tracks" className="track-back">
-          ← Tornar
-        </Link>
-        <h2 className="track-detail-title">{track.name}</h2>
-        <div className="track-stats-grid">
-          <div className="track-stat-card">
-            <span className="track-stat-label">Distància</span>
-            <span className="track-stat-value track-stat-distance">{formatDistance(distance)}</span>
+    <div className="track-detail" ref={trackDetailRef}>
+      <div className="track-detail-header track-detail-header-compact">
+        <h2 className="track-info-title">{track.name}</h2>
+        <div className="track-info-stats">
+          <div className="track-info-stat">
+            <span className="track-info-stat-label">Distància</span>
+            <span className="track-info-stat-value">{formatDistanceKm(distance)}</span>
           </div>
-          <div className="track-stat-card">
-            <span className="track-stat-label">Durada</span>
-            <span className="track-stat-value">{formatDuration(duration)}</span>
+          <div className="track-info-stat">
+            <span className="track-info-stat-label">Durada</span>
+            <span className="track-info-stat-value">{formatDuration(duration)}</span>
           </div>
-          <div className="track-stat-card">
-            <span className="track-stat-label">Punts</span>
-            <span className="track-stat-value">{track.points.length}</span>
-          </div>
+          {hasAltitude && altMin != null && altMax != null && (
+            <div className="track-info-stat">
+              <span className="track-info-stat-label">Altitud</span>
+              <span className="track-info-stat-value">{Math.round(altMin)}–{Math.round(altMax)} m</span>
+            </div>
+          )}
         </div>
       </div>
       <div className="track-detail-map">
+        {isDesktop && editMode && selectedIndex != null && (
+          <div className="track-edit-selected-bar">
+            <span>Punt {selectedIndex + 1} seleccionat</span>
+            <button
+              type="button"
+              className="track-edit-selected-eliminar"
+              onClick={() => removePoint(selectedIndex)}
+              disabled={track.points.length <= 2}
+            >
+              Eliminar punt
+            </button>
+          </div>
+        )}
+        {isDesktop && editMode && track.points.length >= 2 && (
+          <div className="track-edit-add-hint">
+            <span><strong>Arrossega</strong> punts per moure'ls</span>
+            <span><strong>Doble clic</strong> a la línia verda per afegir punt</span>
+            <span><strong>Clica</strong> un punt per seleccionar i eliminar-lo</span>
+          </div>
+        )}
         <MapContainer
           center={center}
           zoom={15}
@@ -96,17 +311,34 @@ export function TrackDetail() {
           style={{ height: '100%', width: '100%' }}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            key={basemap.id}
+            attribution={basemap.attribution}
+            url={basemap.url}
+            tms={basemap.tms}
           />
-          <FitBounds positions={latlngs} />
-          {latlngs.length > 1 && (
-            <Polyline
-              positions={latlngs}
-              pathOptions={{ color: '#22c55e', weight: 5, opacity: 0.9 }}
-            />
-          )}
+          <BasemapChangeHandler basemapId={basemap.id} />
+          <MapResizeHandler infoHeight={48} />
+          <EditableMapContent
+            track={track}
+            editMode={isDesktop && editMode}
+            selectedIndex={selectedIndex}
+            onUpdatePoint={updatePoint}
+            onAddPointAt={addPointAtClick}
+            onSelectPoint={setSelectedIndex}
+          />
         </MapContainer>
+        {isDesktop && (
+          <TrackEditControl
+            editMode={editMode}
+            selectedIndex={selectedIndex}
+            pointsCount={track.points.length}
+            processing={processing}
+            onToggleEdit={handleToggleEditMode}
+            onSave={handleSavePoints}
+            onRemovePoint={removePoint}
+          />
+        )}
+        <MapLayerControl />
       </div>
     </div>
   )
