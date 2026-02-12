@@ -6,6 +6,7 @@ import { TrackDetail } from './components/TrackDetail'
 import { MapView } from './components/MapView'
 import { AuthForm } from './components/AuthForm'
 import { useAuth } from './contexts/AuthContext'
+import { syncLocalTracksToCloud } from './services/tracksService'
 import './App.css'
 
 function AppHeader() {
@@ -89,6 +90,24 @@ function AppHeader() {
 }
 
 function App() {
+  const { user } = useAuth()
+
+  useEffect(() => {
+    if (!user?.uid) return
+    const sync = async () => {
+      const { synced } = await syncLocalTracksToCloud(user.uid)
+      if (synced > 0) {
+        window.dispatchEvent(new CustomEvent('tracks-synced'))
+      }
+    }
+    sync()
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') sync()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [user?.uid])
+
   return (
     <div className="app">
       <AppHeader />

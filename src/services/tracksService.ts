@@ -31,18 +31,33 @@ function firestoreToTrack(id: string, data: Record<string, unknown>): Track {
   }
 }
 
-export async function saveTrack(track: Track, userId?: string): Promise<void> {
+export type SaveTrackResult = {
+  savedLocal: boolean
+  savedCloud: boolean
+}
+
+export async function saveTrack(
+  track: Track,
+  userId?: string
+): Promise<SaveTrackResult> {
   await saveTrackLocal(track)
 
   if (isFirebaseConfigured() && userId) {
-    await setDoc(trackDoc(userId, track.id), {
-      name: track.name,
-      points: track.points,
-      startTime: track.startTime,
-      endTime: track.endTime,
-      createdAt: track.createdAt,
-    })
+    try {
+      await setDoc(trackDoc(userId, track.id), {
+        name: track.name,
+        points: track.points,
+        startTime: track.startTime,
+        endTime: track.endTime,
+        createdAt: track.createdAt,
+      })
+      return { savedLocal: true, savedCloud: true }
+    } catch {
+      return { savedLocal: true, savedCloud: false }
+    }
   }
+
+  return { savedLocal: true, savedCloud: false }
 }
 
 export async function getTracks(userId?: string | null): Promise<Track[]> {
@@ -84,6 +99,38 @@ export async function getTrack(
 
   const { getTrack: getLocal } = await import('../storage')
   return getLocal(id)
+}
+
+/** Puja a Firebase els tracks que només estan en local. Retorna quants s'han pujat. */
+export async function syncLocalTracksToCloud(
+  userId: string
+): Promise<{ synced: number; failed: number }> {
+  if (!isFirebaseConfigured()) return { synced: 0, failed: 0 }
+  try {
+    const cloudSnapshot = await getDocs(tracksCollection(userId))
+    const cloudIds = new Set(cloudSnapshot.docs.map((d) => d.id))
+    const localTracks = await getTracksLocal()
+    const localOnly = localTracks.filter((t) => !cloudIds.has(t.id))
+    let synced = 0
+    let failed = 0
+    for (const track of localOnly) {
+      try {
+        await setDoc(trackDoc(userId, track.id), {
+          name: track.name,
+          points: track.points,
+          startTime: track.startTime,
+          endTime: track.endTime,
+          createdAt: track.createdAt,
+        })
+        synced++
+      } catch {
+        failed++
+      }
+    }
+    return { synced, failed }
+  } catch {
+    return { synced: 0, failed: 0 }
+  }
 }
 
 export async function deleteTrack(

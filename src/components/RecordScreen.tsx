@@ -47,6 +47,7 @@ export function RecordScreen() {
   const [accuracy, setAccuracy] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveCloudFailed, setSaveCloudFailed] = useState(false)
   const [duration, setDuration] = useState(0)
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null)
   const [holdProgress, setHoldProgress] = useState(0)
@@ -141,9 +142,13 @@ export function RecordScreen() {
         endTime: pointsToSave[pointsToSave.length - 1].timestamp,
         createdAt: Date.now(),
       }
-      await saveTrack(track, user?.uid)
+      const result = await saveTrack(track, user?.uid)
       setSaveSuccess(true)
-      setTimeout(() => setSaveSuccess(false), 5000)
+      setSaveCloudFailed(!result.savedCloud)
+      setTimeout(() => {
+        setSaveSuccess(false)
+        setSaveCloudFailed(false)
+      }, 6000)
     }
 
     setPoints([])
@@ -233,7 +238,13 @@ export function RecordScreen() {
       {user && (
       <div className={`status-bar ${!isRecording ? 'status-bar-desktop-hide' : ''}`}>
         {error && <div className="status-error">{error}</div>}
-        {saveSuccess && <div className="status-success">Track guardat i pujat al servidor</div>}
+        {saveSuccess && (
+          <div className={`status-success ${saveCloudFailed ? 'status-warning' : ''}`}>
+            {saveCloudFailed
+              ? 'Track guardat al dispositiu. Sense connexió: es pujarà quan tornis a tenir xarxa.'
+              : 'Track guardat i pujat al servidor'}
+          </div>
+        )}
         <div className="status-row">
             <span className={isRecording ? 'rec-dot' : ''}>
               {isRecording ? 'Gravant' : 'Pausat'}

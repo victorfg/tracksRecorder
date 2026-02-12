@@ -21,6 +21,14 @@ export function TracksList() {
     })
   }, [user?.uid])
 
+  useEffect(() => {
+    const onSynced = () => {
+      getTracks(user?.uid).then(setTracks)
+    }
+    window.addEventListener('tracks-synced', onSynced)
+    return () => window.removeEventListener('tracks-synced', onSynced)
+  }, [user?.uid])
+
   const startEdit = (track: Track) => {
     setEditingId(track.id)
     setEditValue(track.name)

@@ -290,6 +290,10 @@
   font-weight: 600;
 }
 
+.status-success.status-warning {
+  color: #f59e0b;
+}
+
 .status-row {
   display: flex;
   gap: 1.25rem;

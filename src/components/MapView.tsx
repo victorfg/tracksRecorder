@@ -134,6 +134,13 @@ export function MapView() {
     }
   }, [user?.uid])
 
+  useEffect(() => {
+    if (!user?.uid) return
+    const onSynced = () => getTracks(user.uid).then(setTracks)
+    window.addEventListener('tracks-synced', onSynced)
+    return () => window.removeEventListener('tracks-synced', onSynced)
+  }, [user?.uid])
+
   const addLayer = (track: Track) => {
     if (layers.some((l) => l.track.id === track.id)) return
     const color = LAYER_COLORS[layers.length % LAYER_COLORS.length].hex
