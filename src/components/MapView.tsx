@@ -125,8 +125,8 @@ export function MapView() {
 
   useEffect(() => {
     if (user?.uid) {
-      getTracks(user.uid).then((data) => {
-        setTracks(data)
+      getTracks(user.uid).then(({ tracks: t }) => {
+        setTracks(t)
         setLoading(false)
       })
     } else {
@@ -136,7 +136,7 @@ export function MapView() {
 
   useEffect(() => {
     if (!user?.uid) return
-    const onSynced = () => getTracks(user.uid).then(setTracks)
+    const onSynced = () => getTracks(user.uid).then(({ tracks: t }) => setTracks(t))
     window.addEventListener('tracks-synced', onSynced)
     return () => window.removeEventListener('tracks-synced', onSynced)
   }, [user?.uid])
@@ -186,7 +186,7 @@ export function MapView() {
         await saveTrack(t, user!.uid)
       }
       allTracks.forEach((t) => addLayer(t))
-      await getTracks(user!.uid).then(setTracks)
+      await getTracks(user!.uid).then(({ tracks: t }) => setTracks(t))
     } finally {
       setImportLoading(false)
     }

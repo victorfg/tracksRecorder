@@ -509,6 +509,35 @@
   color: var(--accent);
 }
 
+.track-upload-btn {
+  flex-shrink: 0;
+  width: 40px;
+  padding: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-left: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.track-upload-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+.track-upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.track-meta-pending {
+  color: #f59e0b;
+  font-size: 0.8rem;
+}
+
 .track-item .track-delete-btn {
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }

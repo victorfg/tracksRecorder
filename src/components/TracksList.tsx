@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { getTracks, deleteTrack, saveTrack } from '../services/tracksService'
+import { getTracks, deleteTrack, saveTrack, uploadTrackToCloud } from '../services/tracksService'
 import { ConfirmModal } from './ConfirmModal'
 import type { Track } from '../types'
 import { calculateTrackDistance, formatDistance, formatDuration } from '../utils/geo'
@@ -9,25 +9,30 @@ import { calculateTrackDistance, formatDistance, formatDuration } from '../utils
 export function TracksList() {
   const { user } = useAuth()
   const [tracks, setTracks] = useState<Track[]>([])
+  const [localOnlyIds, setLocalOnlyIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [trackToDelete, setTrackToDelete] = useState<Track | null>(null)
+  const [uploadingId, setUploadingId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
 
-  useEffect(() => {
-    getTracks(user?.uid).then((data) => {
-      setTracks(data)
+  const fetchTracks = useCallback(() => {
+    getTracks(user?.uid).then(({ tracks: t, localOnlyIds: ids }) => {
+      setTracks(t)
+      setLocalOnlyIds(ids)
       setLoading(false)
     })
   }, [user?.uid])
 
   useEffect(() => {
-    const onSynced = () => {
-      getTracks(user?.uid).then(setTracks)
-    }
+    fetchTracks()
+  }, [fetchTracks])
+
+  useEffect(() => {
+    const onSynced = () => fetchTracks()
     window.addEventListener('tracks-synced', onSynced)
     return () => window.removeEventListener('tracks-synced', onSynced)
-  }, [user?.uid])
+  }, [fetchTracks])
 
   const startEdit = (track: Track) => {
     setEditingId(track.id)
@@ -54,9 +59,28 @@ export function TracksList() {
 
   const handleConfirmDelete = async () => {
     if (!trackToDelete || !user?.uid) return
-    await deleteTrack(trackToDelete.id, user.uid)
-    setTracks((prev) => prev.filter((t) => t.id !== trackToDelete.id))
-    setTrackToDelete(null)
+    try {
+      await deleteTrack(trackToDelete.id, user.uid)
+      setTracks((prev) => prev.filter((t) => t.id !== trackToDelete.id))
+      setLocalOnlyIds((prev) => {
+        const next = new Set(prev)
+        next.delete(trackToDelete.id)
+        return next
+      })
+    } finally {
+      setTrackToDelete(null)
+    }
+  }
+
+  const handleUpload = async (track: Track) => {
+    if (!user?.uid) return
+    setUploadingId(track.id)
+    try {
+      const ok = await uploadTrackToCloud(track, user.uid)
+      if (ok) fetchTracks()
+    } finally {
+      setUploadingId(null)
+    }
   }
 
   if (loading) {
@@ -128,20 +152,39 @@ export function TracksList() {
                     <span className="track-meta">
                       {formatDistance(distance)} · {formatDuration(duration)} ·{' '}
                       {track.points.length} punts
+                      {localOnlyIds.has(track.id) && (
+                        <span className="track-meta-pending"> · sense pujar</span>
+                      )}
                     </span>
                   </Link>
-                  <button
-                    type="button"
-                    className="track-edit-btn"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      startEdit(track)
-                    }}
-                    title="Editar nom"
-                  >
-                    ✎
-                  </button>
+                  {localOnlyIds.has(track.id) ? (
+                    <button
+                      type="button"
+                      className="track-upload-btn"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleUpload(track)
+                      }}
+                      disabled={uploadingId === track.id}
+                      title="Pujar a la núvol"
+                    >
+                      {uploadingId === track.id ? '…' : '↑'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="track-edit-btn"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        startEdit(track)
+                      }}
+                      title="Editar nom"
+                    >
+                      ✎
+                    </button>
+                  )}
                 </>
               )}
               <button
