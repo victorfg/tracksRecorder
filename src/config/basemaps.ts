@@ -11,6 +11,8 @@ export type Basemap = {
   attribution: string;
   /** true si el servidor usa TMS (eix Y invertit) */
   tms?: boolean;
+  /** Nivell de zoom màxim amb tiles reals (ICGC suporta 20, Leaflet per defecte 18) */
+  maxZoom?: number;
 };
 
 const ICGC_ATTRIBUTION =
@@ -36,30 +38,35 @@ export const BASEMAPS: Basemap[] = [
     name: "ICGC Topogràfic",
     url: `${ICGC_BASE}/topografic/MON3857NW/{z}/{x}/{y}.png`,
     attribution: ICGC_ATTRIBUTION,
+    maxZoom: 20,
   },
   {
     id: "icgc-topografic-gris",
     name: "ICGC Topogràfic Gris",
     url: `${ICGC_BASE}/topografic-gris/MON3857NW/{z}/{x}/{y}.png`,
     attribution: ICGC_ATTRIBUTION,
+    maxZoom: 20,
   },
   {
     id: "icgc-orto",
     name: "ICGC Orto",
     url: `${ICGC_BASE}/orto/MON3857NW/{z}/{x}/{y}.png`,
     attribution: ICGC_ATTRIBUTION,
+    maxZoom: 20,
   },
   {
     id: "icgc-orto-gris",
     name: "ICGC Orto Gris",
     url: `${ICGC_BASE}/orto-gris/MON3857NW/{z}/{x}/{y}.png`,
     attribution: ICGC_ATTRIBUTION,
+    maxZoom: 20,
   },
   {
     id: "icgc-orto-hibrida",
     name: "ICGC Orto Híbrida",
     url: `${ICGC_BASE}/orto-hibrida/MON3857NW/{z}/{x}/{y}.png`,
     attribution: ICGC_ATTRIBUTION,
+    maxZoom: 20,
   },
   // IGN España (TMS, eix Y invertit)
   {

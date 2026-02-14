@@ -312,6 +312,7 @@ export function RecordScreen() {
         <MapContainer
           center={center}
           zoom={zoom}
+          maxZoom={20}
           className="map"
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
@@ -325,6 +326,8 @@ export function RecordScreen() {
             attribution={basemap.attribution}
             url={basemap.url}
             tms={basemap.tms}
+            maxZoom={basemap.maxZoom}
+            maxNativeZoom={basemap.maxZoom}
           />
           <MapInit />
           <BasemapChangeHandler basemapId={basemap.id} />

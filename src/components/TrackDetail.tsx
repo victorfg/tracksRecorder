@@ -310,6 +310,7 @@ export function TrackDetail() {
         <MapContainer
           center={center}
           zoom={15}
+          maxZoom={20}
           className="map"
           style={{ height: '100%', width: '100%' }}
           rotate={isMobile}
@@ -322,6 +323,8 @@ export function TrackDetail() {
             attribution={basemap.attribution}
             url={basemap.url}
             tms={basemap.tms}
+            maxZoom={basemap.maxZoom}
+            maxNativeZoom={basemap.maxZoom}
           />
           <BasemapChangeHandler basemapId={basemap.id} />
           <MapNorthButton visible={isMobile} />

@@ -403,6 +403,7 @@ export function MapView() {
         <MapContainer
           center={center}
           zoom={8}
+          maxZoom={20}
           className="map"
           style={{ height: '100%', width: '100%' }}
           rotate={isMobile}
@@ -415,6 +416,8 @@ export function MapView() {
             attribution={basemap.attribution}
             url={basemap.url}
             tms={basemap.tms}
+            maxZoom={basemap.maxZoom}
+            maxNativeZoom={basemap.maxZoom}
           />
           <MapResizeHandler sidebarOpen={sidebarOpen} />
           <BasemapChangeHandler basemapId={basemap.id} />
