@@ -1,0 +1,116 @@
+.simplify-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 10000;
+  animation: simplify-modal-fade-in 0.2s ease;
+}
+
+@keyframes simplify-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.simplify-modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  max-width: 360px;
+  width: 100%;
+  padding: 1.5rem;
+  animation: simplify-modal-slide-in 0.25s ease;
+}
+
+@keyframes simplify-modal-slide-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.simplify-modal-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.simplify-modal-message {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.simplify-modal-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.simplify-modal-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.simplify-modal-opt:hover {
+  background: var(--bg-hover);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.simplify-modal-opt-label {
+  font-weight: 600;
+}
+
+.simplify-modal-opt-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.simplify-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.simplify-modal-btn.cancel {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.simplify-modal-btn.cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}

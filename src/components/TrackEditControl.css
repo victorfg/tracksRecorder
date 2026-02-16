@@ -54,6 +54,31 @@
   margin-bottom: 0.5rem;
 }
 
+.track-edit-menu-section {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.track-edit-menu-section:not(:first-child) {
+  margin-top: 0.5rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.track-edit-menu-separator {
+  display: block;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+
 .track-edit-options {
   display: flex;
   flex-direction: column;
@@ -61,7 +86,9 @@
 }
 
 .track-edit-opt {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
   padding: 0.5rem 0.75rem;
   text-align: left;
@@ -105,4 +132,34 @@
 .track-edit-opt:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.track-edit-opt-with-tooltip {
+  position: relative;
+}
+
+.track-edit-opt-with-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: normal;
+  width: 240px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-md);
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.track-edit-opt-with-tooltip:disabled:hover::after {
+  display: none;
 }

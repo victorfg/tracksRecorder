@@ -102,6 +102,29 @@ export function turfAlong(points: TrackPoint[], distanceM: number): [number, num
   return [lat, lng]
 }
 
+/**
+ * Simplifica els punts del track amb l'algorisme Douglas-Peucker.
+ * Redueix el nombre de punts mantenint la forma general de la ruta.
+ * @param points Punts del track
+ * @param tolerance Tolerància en graus (menor = més punts, major = menys punts). ~0.0001 ≈ 11m
+ */
+export function simplifyTrackPoints(
+  points: TrackPoint[],
+  tolerance = 0.0001
+): TrackPoint[] {
+  if (points.length < 3) return points
+  const line = pointsToLineString(points)
+  const simplified = turf.simplify(line, {
+    tolerance,
+    highQuality: true,
+  })
+  const geom = simplified as { geometry?: { coordinates: number[][] } }
+  const coords = geom.geometry?.coordinates ?? []
+  if (coords.length < 2) return points
+  const range = [points[0], points[points.length - 1]]
+  return lineStringToPoints(simplified, range)
+}
+
 /** Buffer al voltant de la línia (metres). Retorna un polígon. */
 export function turfBuffer(points: TrackPoint[], radiusM = 10) {
   const line = pointsToLineString(points)

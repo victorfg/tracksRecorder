@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { getTracks, deleteTrack, saveTrack, uploadTrackToCloud } from '../services/tracksService'
@@ -15,6 +15,7 @@ export function TracksList() {
   const [uploadingId, setUploadingId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+  const justFinishedEditingRef = useRef(false)
 
   const fetchTracks = useCallback(() => {
     getTracks(user?.uid).then(({ tracks: t, localOnlyIds: ids }) => {
@@ -35,6 +36,7 @@ export function TracksList() {
   }, [fetchTracks])
 
   const startEdit = (track: Track) => {
+    justFinishedEditingRef.current = false
     setEditingId(track.id)
     setEditValue(track.name)
   }
@@ -43,6 +45,7 @@ export function TracksList() {
     if (!editingId || !user?.uid) return
     const track = tracks.find((t) => t.id === editingId)
     const trimmed = editValue.trim()
+    justFinishedEditingRef.current = true
     if (!track || trimmed === track.name || trimmed === '') {
       setEditingId(null)
       return
@@ -193,6 +196,10 @@ export function TracksList() {
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
+                  if (justFinishedEditingRef.current) {
+                    justFinishedEditingRef.current = false
+                    return
+                  }
                   setTrackToDelete(track)
                 }}
                 disabled={isEditing}
